@@ -1,0 +1,49 @@
+{
+  "name": "learn-js-mathsprintgame",
+  "version": "1.0.0",
+  "description": "learn-js-mathsprintgame",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --open",
+    "build": "npm run lint && webpack --mode production",
+    "jsonserver": "json-server --watch data/db.json -m ./node_modules/json-server-auth -r routes.json",
+    "fakedb": "node ./fakedb.js && prettier --write \"./data/db.json\"",
+    "lint": "npm run lint:eslint && npm run lint:stylelint && npm run lint:prettier",
+    "lint:eslint": "eslint --fix --ext \".js\" --ignore-path .eslintignore .",
+    "lint:stylelint": "stylelint --fix \"**/*.{css,html}\" --ignore-path .stylelintignore",
+    "lint:prettier": "prettier --write \"**/*.{js,css,html,md}\" --ignore-path .prettierignore",
+    "lint:prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix",
+    "*.{css,html}": "stylelint --fix",
+    "*.{js,css,html,md}": "prettier --write"
+  },
+  "author": "Gurov Dmitriy",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
+    "@commitlint/cli": "^15.0.0",
+    "@commitlint/config-conventional": "^15.0.0",
+    "babel-loader": "^8.2.3",
+    "eslint": "^8.4.0",
+    "eslint-config-prettier": "^8.3.0",
+    "faker": "^5.5.3",
+    "husky": "^7.0.4",
+    "json-server": "^0.17.0",
+    "json-server-auth": "^2.1.0",
+    "lint-staged": "^12.1.2",
+    "postcss-html": "^1.3.0",
+    "prettier": "2.5.0",
+    "stylelint": "^14.0.1",
+    "stylelint-config-html": "^1.0.0",
+    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-config-rational-order": "^0.1.2",
+    "stylelint-config-standard": "^24.0.0",
+    "stylelint-order": "^5.0.0",
+    "webpack": "^5.64.4",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0"
+  }
+}
