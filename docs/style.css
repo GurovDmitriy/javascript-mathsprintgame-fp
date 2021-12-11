@@ -22,9 +22,8 @@ body {
 body {
   display: flex;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
-  overflow: hidden;
 
   font-family: "PT Mono", sans-serif;
 
