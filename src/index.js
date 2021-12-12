@@ -1,37 +1,26 @@
 /* eslint-disable no-unused-vars */
 
 //
-// OOP
+// for Function Programming
 //
 
-// class MathSprintGame {
-//   prop = value
+// core
 
-//   constructor() {
-//     this.name = name
-//   }
+import { compileResult } from "./core.js"
 
-//   logName(value) {
-//     console.log(this._name + value)
-//   }
+// function helpers
 
-//   get name() {
-//     return this._name
-//   }
+import {
+  getRandom,
+  getCorrectEquations,
+  getWrongEquations,
+  getEquationsArray,
+  getShuffleArray,
+} from "./helpers.js"
 
-//   set name(value) {
-//     if (value !== "dima") return
-//     this._name = value
-//   }
-// }
+// middleware
 
-// const game = new MathSprintGame()
-
-// console.log(game)
-
-//
-// functional programming
-//
+import { checkTargetElem, checkMarkedSelect } from "./middlaware"
 
 // Pages
 
@@ -94,15 +83,6 @@ countdown.textContent = 3
 
 // core
 
-const pipe =
-  (f, g) =>
-  (...args) =>
-    g(f(...args))
-
-function compileResult(...fns) {
-  return fns.reduce(pipe)
-}
-
 // game state
 
 let gameState = {
@@ -111,11 +91,13 @@ let gameState = {
   isShowSplashPage: true,
   countDownValue: countdown.textContent,
   markedValue: "",
+  equationsArray: [],
+  questionAmount: 0,
+  correctEquations: 0,
+  wrongEquations: 0,
 }
 
 const gameStateDefault = { ...gameState }
-
-// function helpers
 
 // function for game
 
@@ -130,6 +112,40 @@ function setMarkerSelect(state) {
   elem.parentElement.classList.add("selected-label")
 
   return Object.assign({}, state, { isMarkedSelect: true })
+}
+
+function setQuestionAmount(state) {
+  const value = Number(state.markedValue.split("-")[1])
+
+  return Object.assign({}, state, { questionAmount: value })
+}
+
+function setEquations(state) {
+  const correct = getRandom(1, state.questionAmount)
+  const incorrect = state.questionAmount - correct
+
+  return Object.assign({}, state, {
+    correctEquations: correct,
+    wrongEquations: incorrect,
+  })
+}
+
+function setEquationsArray(state) {
+  const correctArray = getEquationsArray(
+    state.correctEquations,
+    getCorrectEquations
+  )
+  const wrongArray = getEquationsArray(state.wrongEquations, getWrongEquations)
+
+  const equationsArray = [...correctArray, ...wrongArray]
+
+  return Object.assign({}, state, { equationsArray })
+}
+
+function setShuffleEquationsArray(state) {
+  const shuffleArray = getShuffleArray(state.equationsArray)
+
+  return Object.assign({}, state, { equationsArray: shuffleArray })
 }
 
 function hideSplashPage(state) {
@@ -189,16 +205,6 @@ function setCountDown(state) {
   return Object.assign({}, state)
 }
 
-// middleware
-
-function checkTargetElem(elem) {
-  return elem.target.type === "radio"
-}
-
-function checkMarkedSelect(state) {
-  return state.isMarkedSelect
-}
-
 // mutations
 
 function setResult(state) {
@@ -213,6 +219,10 @@ function selectQuestion(evt) {
   compileResult(
     removeMarkerSelect,
     setMarkerSelect,
+    setQuestionAmount,
+    setEquations,
+    setEquationsArray,
+    setShuffleEquationsArray,
     setResult
   )(Object.assign({}, gameState, { markedValue: evt.target.id }))
 }
