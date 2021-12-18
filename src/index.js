@@ -58,37 +58,13 @@ const selectionContainer = document.querySelector(".selection-container")
 
 countdown.textContent = 3
 
-// // Equations
-// let questionAmount = 0
-// let equationsArray = []
-// let playerGuessArray = []
-// let bestScoreArray = []
-
-// // Game Page
-// let firstNumber = 0
-// let secondNumber = 0
-// let equationObject = {}
-// const wrongFormat = []
-
-// // Time
-// let timer
-// let timePlayed = 0
-// let baseTime = 0
-// let penaltyTime = 0
-// let finalTime = 0
-// let finalTimeDisplay = "0.0"
-
-// // Scroll
-// let valueY = 0
-
-// core
-
 // game state
 
 let gameState = {
   isMarkedSelect: false,
   isShowCountDownPage: false,
   isShowSplashPage: true,
+  isShowGamePage: false,
   countDownValue: countdown.textContent,
   markedValue: "",
   equationsArray: [],
@@ -180,12 +156,20 @@ function showCountDownPage(state) {
   })
 }
 
+function showGamePage(state) {
+  gamePage.hidden = false
+
+  return Object.assign({}, state, {
+    isShowGamePage: true,
+  })
+}
+
 function setCountDown(state) {
   const result = new Promise((resolve) => {
     let value = state.countDownValue
 
     ;(function count() {
-      if (value === 0) {
+      if (value === -1) {
         resolve(value)
         return
       }
@@ -200,6 +184,21 @@ function setCountDown(state) {
 
   result.then(() => {
     runGame()
+  })
+
+  return Object.assign({}, state)
+}
+
+function addEquationsToDOM(state) {
+  state.equationsArray.forEach((eq) => {
+    const item = document.createElement("div")
+    item.classList.add("item")
+
+    const equationText = document.createElement("h1")
+    equationText.textContent = eq.value
+
+    item.appendChild(equationText)
+    itemContainer.appendChild(item)
   })
 
   return Object.assign({}, state)
@@ -240,7 +239,12 @@ function startRound(evt) {
 }
 
 function runGame() {
-  compileResult(hideCountDownPage, setResult)(Object.assign({}, gameState))
+  compileResult(
+    hideCountDownPage,
+    addEquationsToDOM,
+    showGamePage,
+    setResult
+  )(Object.assign({}, gameState))
 
   console.log(gameState)
 }

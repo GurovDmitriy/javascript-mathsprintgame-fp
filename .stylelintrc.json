@@ -25,6 +25,7 @@
     ],
     "max-empty-lines": 1,
     "color-hex-length": "long",
-    "color-hex-case": "lower"
+    "color-hex-case": "lower",
+    "selector-class-pattern": "[a-z]+"
   }
 }

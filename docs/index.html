@@ -9,93 +9,158 @@
     <link rel="icon" href="favicon.ico" />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <div class="game-container">
-      <!-- Header -->
-      <div class="header">
-        <h1>Math Sprint Game</h1>
-      </div>
+  <body class="body">
+    <noscript>
+      <strong>Caution your scripts is disable!</strong>
+    </noscript>
+    <div class="game-container body__game-container">
+      <!-- header -->
+      <header class="header game-container__header">
+        <h1 class="header__caption">Math Sprint Game</h1>
 
-      <!-- Splash Page -->
-      <div class="card" id="splash-page">
-        <form id="start-form">
-          <div class="selection-container">
-            <!-- 10 Questions Radio Input -->
-            <div class="radio-container">
-              <label for="value-10">10 Questions</label>
-              <input type="radio" name="questions" value="10" id="value-10" />
-              <span class="best-score">
-                <span>Best Score</span>
-                <span class="best-score-value"></span>
-              </span>
+        <!-- nav -->
+        <nav class="navigation header__navigation">
+          <h2 class="visually-hidden">Navigation for Game</h2>
+
+          <form class="form navigation__form">
+            <div class="form__fieldset-wrapper">
+              <!-- Splash Page -->
+              <fieldset class="fieldset form__fieldset" id="splash-page">
+                <legend class="legend fieldset__legend">Questions</legend>
+                <!-- 10 Questions Radio Input -->
+                <div class="questions-wrapper form__questions-wrapper">
+                  <div class="input-box questions-wrapper__input-box">
+                    <label class="label input-box__label" for="value-10"
+                      >10 Questions</label
+                    >
+                    <input
+                      class="input input-box__input visually-hidden"
+                      type="radio"
+                      name="questions"
+                      value="10"
+                      id="value-10"
+                    />
+                    <div class="best-score-box">
+                      <h3 class="best-score-caption best-score-box__caption">
+                        Best Score
+                      </h3>
+                      <strong class="best-score-value best-score-box__value"
+                        >0</strong
+                      >
+                    </div>
+                  </div>
+                  <!-- 25 Questions Radio Input -->
+                  <div class="input-box questions-wrapper__input-box">
+                    <label class="label input-box__label" for="value-25"
+                      >25 Questions</label
+                    >
+                    <input
+                      class="input input-box__input visually-hidden"
+                      type="radio"
+                      name="questions"
+                      value="25"
+                      id="value-25"
+                    />
+                    <div class="best-score-box">
+                      <h3 class="best-score-caption best-score-box__caption">
+                        Best Score
+                      </h3>
+                      <strong class="best-score-value best-score-box__value"
+                        >0</strong
+                      >
+                    </div>
+                  </div>
+                  <!-- 50 Questions Radio Input -->
+                  <div class="input-box questions-wrapper__input-box">
+                    <label class="label input-box__label" for="value-50"
+                      >50 Questions</label
+                    >
+                    <input
+                      class="input input-box__input visually-hidden"
+                      type="radio"
+                      name="questions"
+                      value="50"
+                      id="value-50"
+                    />
+                    <div class="best-score-box">
+                      <h3 class="best-score-caption best-score-box__caption">
+                        Best Score
+                      </h3>
+                      <strong class="best-score-value best-score-box__value"
+                        >0</strong
+                      >
+                    </div>
+                  </div>
+                  <!-- 99 Questions Radio Input -->
+                  <div class="input-box questions-wrapper__input-box">
+                    <label class="label input-box__label" for="value-99"
+                      >99 Questions</label
+                    >
+                    <input
+                      class="input input-box__input visually-hidden"
+                      type="radio"
+                      name="questions"
+                      value="99"
+                      id="value-99"
+                    />
+                    <div class="best-score-box">
+                      <h3 class="best-score-caption best-score-box__caption">
+                        Best Score
+                      </h3>
+                      <strong class="best-score-value best-score-box__value"
+                        >0</strong
+                      >
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+              <!-- Countdown Page -->
+              <fieldset
+                class="fieldset form__fieldset"
+                id="countdown-page"
+                hidden
+              >
+                <legend class="legend fieldset__legend">Countdown</legend>
+                <div class="countdown-wrapper form__countdown-wrapper">
+                  <h3 class="countdown fieldset__countdown">3</h3>
+                </div>
+              </fieldset>
+              <!-- Game Page -->
+              <fieldset class="fieldset form__fieldset" id="game-page" hidden>
+                <legend class="legend fieldset__legend">Quiz</legend>
+                <!-- Item Container -->
+                <div class="quiz form__quiz"></div>
+              </fieldset>
+              <!-- Score Page -->
+              <fieldset class="fieldset form__fieldset" id="score-page" hidden>
+                <legend class="legend fieldset__legend">Score</legend>
+                <!-- Score Container -->
+                <div class="score">
+                  <h3 class="score__item score__item--title">Your Time</h3>
+                  <h3 class="score__item score__item--final-time">252</h3>
+                  <h3 class="score__item score__item--base-time">5252</h3>
+                  <h3 class="score__item score__item--penalty-time">222</h3>
+                </div>
+              </fieldset>
             </div>
-            <!-- 25 Questions Radio Input -->
-            <div class="radio-container">
-              <label for="value-25">25 Questions</label>
-              <input type="radio" name="questions" value="25" id="value-25" />
-              <span class="best-score">
-                <span>Best Score</span>
-                <span class="best-score-value"></span>
-              </span>
-            </div>
-            <!-- 50 Questions Radio Input -->
-            <div class="radio-container">
-              <label for="value-50">50 Questions</label>
-              <input type="radio" name="questions" value="50" id="value-50" />
-              <span class="best-score">
-                <span>Best Score</span>
-                <span class="best-score-value"></span>
-              </span>
-            </div>
-            <!-- 99 Questions Radio Input -->
-            <div class="radio-container">
-              <label for="value-99">99 Questions</label>
-              <input type="radio" name="questions" value="99" id="value-99" />
-              <span class="best-score">
-                <span>Best Score</span>
-                <span class="best-score-value"></span>
-              </span>
-            </div>
+            <button class="visually-hidden" type="submit">Play</button>
+          </form>
+        </nav>
+        <!-- Button -->
+        <section class="btn-box form__btn-box">
+          <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
+          <button class="btn btn--start btn-box__btn">Start Round</button>
+          <!-- Right/Wrong Buttons -->
+          <div class="btn-quiz-box btn-box__btn-quiz-box" hidden>
+            <button class="btn btn--wrong btn-quiz-box__btn">Wrong</button>
+            <button class="btn btn--right btn-quiz-box__btn">Right</button>
           </div>
-          <!-- Start Button -->
-          <div class="selection-footer">
-            <button class="start" type="submit">Start Round</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Countdown Page -->
-      <div class="card" id="countdown-page" hidden>
-        <h1 class="countdown"></h1>
-      </div>
-
-      <!-- Game Page -->
-      <div class="card" id="game-page" hidden>
-        <!-- Item Container -->
-        <div class="item-container"></div>
-        <!-- Right/Wrong Buttons -->
-        <div class="item-footer">
-          <button class="wrong" onclick="select(false)">Wrong</button>
-          <button class="right" onclick="select(true)">Right</button>
-        </div>
-      </div>
-
-      <!-- Score Page -->
-      <div class="card" id="score-page" hidden>
-        <!-- Score Container -->
-        <div class="score-container">
-          <h1 class="title">Your Time</h1>
-          <h1 class="final-time"></h1>
-          <h1 class="base-time"></h1>
-          <h1 class="penalty-time"></h1>
-        </div>
-        <!-- Play Again Button -->
-        <div class="score-footer">
-          <button class="play-again" onclick="playAgain()" hidden>
+          <!-- Play Again Button -->
+          <button class="btn btn--play-again btn-box__btn" hidden>
             Play Again
           </button>
-        </div>
-      </div>
+        </section>
+      </header>
     </div>
     <!-- script -->
     <script src="script.js"></script>
