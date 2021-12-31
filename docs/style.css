@@ -36,6 +36,10 @@ fieldset {
   border: none;
 }
 
+label {
+  pointer-events: none;
+}
+
 legend {
   display: none;
   margin: 0;
@@ -76,7 +80,7 @@ legend {
   background-color: #e0e0e0;
 }
 
-.game-container {
+.game {
   display: flex;
   flex-direction: column;
 
@@ -91,14 +95,15 @@ legend {
   user-select: none;
 }
 
-.game-container__header {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
+.game__header {
   max-height: 100%;
 }
 
 .header {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
   padding: 0 20px;
 }
 
@@ -106,7 +111,7 @@ legend {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding: 40px 0;
+
   overflow-y: scroll;
 
   background: #e0e0e0;
@@ -133,16 +138,34 @@ legend {
   justify-content: center;
 }
 
-.questions-wrapper {
+.questions {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.label {
+.input-box__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 57px;
+  padding: 12px 20px;
+
   font-size: 1.25rem;
   line-height: 1.65;
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+}
+
+.input-box__label span {
+  font-size: 1.25rem;
+  line-height: 1.65;
+  text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+
+  pointer-events: none;
 }
 
 .input-box {
@@ -153,9 +176,7 @@ legend {
   justify-content: space-between;
 
   width: 90%;
-  min-height: 57px;
   margin-bottom: 40px;
-  padding: 12px 20px;
 
   background-color: #e0e0e0;
   border-radius: 15px;
@@ -166,16 +187,23 @@ legend {
   margin-bottom: 0;
 }
 
-.best-score-box {
+.input-box--active {
+  background-color: #ededed;
+  box-shadow: 6px 6px 18px #bebebe, -6px -6px 18px #ffffff;
+}
+
+.best-score {
   display: flex;
   align-content: center;
   align-items: center;
   justify-content: space-between;
 
   width: 26%;
+
+  pointer-events: none;
 }
 
-.best-score-caption {
+.best-score__caption {
   margin: 0;
 
   font-size: 0.813rem;
@@ -183,7 +211,7 @@ legend {
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
 }
 
-.best-score-value {
+.best-score__value {
   margin: 0;
 
   font-size: 0.813rem;
@@ -231,13 +259,13 @@ legend {
   width: 100%;
 }
 
-.countdown-wrapper {
+.countdown {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.countdown {
+.countdown__caption {
   font-size: 2.625em;
   line-height: 1.548;
   text-transform: capitalize;
@@ -248,7 +276,7 @@ legend {
   padding: 60px 0;
 }
 
-.quiz-item {
+.quiz__item {
   width: 60%;
   margin: 0 auto;
   margin-bottom: 20px;
@@ -263,11 +291,11 @@ legend {
   border-radius: 10px;
 }
 
-.quiz-item:last-child {
+.quiz__item:last-child {
   margin-bottom: 0;
 }
 
-.quiz-item--active {
+.quiz__item--active {
   background: linear-gradient(145deg, #f0f0f0, #cacaca);
   box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
 }

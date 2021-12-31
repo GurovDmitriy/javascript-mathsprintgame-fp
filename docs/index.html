@@ -13,104 +13,90 @@
     <noscript>
       <strong>Caution your scripts is disable!</strong>
     </noscript>
-    <div class="game-container body__game-container">
+    <div class="game body__game">
       <!-- header -->
-      <header class="header game-container__header">
+      <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
         <!-- nav -->
         <nav class="navigation header__navigation">
-          <h2 class="visually-hidden">Navigation for Game</h2>
+          <h2 class="navigation__caption visually-hidden">
+            Navigation for Game
+          </h2>
 
           <form class="form navigation__form">
             <div class="form__fieldset-wrapper">
               <!-- Splash Page -->
               <fieldset class="fieldset form__fieldset" id="splash-page">
-                <legend class="legend fieldset__legend">Questions</legend>
+                <legend class="fieldset__legend">Questions</legend>
                 <!-- 10 Questions Radio Input -->
-                <div class="questions-wrapper form__questions-wrapper">
-                  <div class="input-box questions-wrapper__input-box">
-                    <label class="label input-box__label" for="value-10"
-                      >10 Questions</label
+                <div class="questions fieldset__questions">
+                  <div class="input-box questions__input-box">
+                    <label class="input-box__label" for="value-10">
+                      <span>10 Questions</span>
+                      <div class="best-score input-box__best-score">
+                        <h3 class="best-score__caption">Best Score</h3>
+                        <strong class="best-score__value">0</strong>
+                      </div></label
                     >
                     <input
-                      class="input input-box__input visually-hidden"
+                      class="input-box__input visually-hidden"
                       type="radio"
                       name="questions"
                       value="10"
                       id="value-10"
                     />
-                    <div class="best-score-box">
-                      <h3 class="best-score-caption best-score-box__caption">
-                        Best Score
-                      </h3>
-                      <strong class="best-score-value best-score-box__value"
-                        >0</strong
-                      >
-                    </div>
                   </div>
                   <!-- 25 Questions Radio Input -->
-                  <div class="input-box questions-wrapper__input-box">
-                    <label class="label input-box__label" for="value-25"
-                      >25 Questions</label
-                    >
+                  <div class="input-box questions__input-box">
+                    <label class="input-box__label" for="value-25">
+                      <span>25 Questions</span>
+                      <div class="best-score input-box__best-score">
+                        <h3 class="best-score__caption">Best Score</h3>
+                        <strong class="best-score__value">0</strong>
+                      </div>
+                    </label>
                     <input
-                      class="input input-box__input visually-hidden"
+                      class="input-box__input visually-hidden"
                       type="radio"
                       name="questions"
                       value="25"
                       id="value-25"
                     />
-                    <div class="best-score-box">
-                      <h3 class="best-score-caption best-score-box__caption">
-                        Best Score
-                      </h3>
-                      <strong class="best-score-value best-score-box__value"
-                        >0</strong
-                      >
-                    </div>
                   </div>
                   <!-- 50 Questions Radio Input -->
-                  <div class="input-box questions-wrapper__input-box">
-                    <label class="label input-box__label" for="value-50"
-                      >50 Questions</label
-                    >
+                  <div class="input-box questions__input-box">
+                    <label class="input-box__label" for="value-50">
+                      <span>50 Questions</span>
+                      <div class="best-score input-box__best-score">
+                        <h3 class="best-score__caption">Best Score</h3>
+                        <strong class="best-score__value">0</strong>
+                      </div>
+                    </label>
                     <input
-                      class="input input-box__input visually-hidden"
+                      class="input-box__input visually-hidden"
                       type="radio"
                       name="questions"
                       value="50"
                       id="value-50"
                     />
-                    <div class="best-score-box">
-                      <h3 class="best-score-caption best-score-box__caption">
-                        Best Score
-                      </h3>
-                      <strong class="best-score-value best-score-box__value"
-                        >0</strong
-                      >
-                    </div>
                   </div>
                   <!-- 99 Questions Radio Input -->
-                  <div class="input-box questions-wrapper__input-box">
-                    <label class="label input-box__label" for="value-99"
-                      >99 Questions</label
-                    >
+                  <div class="input-box questions__input-box">
+                    <label class="input-box__label" for="value-99">
+                      <span>99 Questions</span>
+                      <div class="best-score input-box__best-score">
+                        <h3 class="best-score__caption">Best Score</h3>
+                        <strong class="best-score__value">0</strong>
+                      </div>
+                    </label>
                     <input
-                      class="input input-box__input visually-hidden"
+                      class="input-box__input visually-hidden"
                       type="radio"
                       name="questions"
                       value="99"
                       id="value-99"
                     />
-                    <div class="best-score-box">
-                      <h3 class="best-score-caption best-score-box__caption">
-                        Best Score
-                      </h3>
-                      <strong class="best-score-value best-score-box__value"
-                        >0</strong
-                      >
-                    </div>
                   </div>
                 </div>
               </fieldset>
@@ -120,22 +106,22 @@
                 id="countdown-page"
                 hidden
               >
-                <legend class="legend fieldset__legend">Countdown</legend>
-                <div class="countdown-wrapper form__countdown-wrapper">
-                  <h3 class="countdown fieldset__countdown">3</h3>
+                <legend class="fieldset__legend">Countdown</legend>
+                <div class="countdown fieldset__countdown">
+                  <h3 class="countdown__caption">3</h3>
                 </div>
               </fieldset>
               <!-- Game Page -->
               <fieldset class="fieldset form__fieldset" id="game-page" hidden>
-                <legend class="legend fieldset__legend">Quiz</legend>
+                <legend class="fieldset__legend">Quiz</legend>
                 <!-- Item Container -->
-                <div class="quiz form__quiz"></div>
+                <div class="quiz fieldset__quiz"></div>
               </fieldset>
               <!-- Score Page -->
               <fieldset class="fieldset form__fieldset" id="score-page" hidden>
-                <legend class="legend fieldset__legend">Score</legend>
+                <legend class="fieldset__legend">Score</legend>
                 <!-- Score Container -->
-                <div class="score">
+                <div class="score fieldset__score">
                   <h3 class="score__item score__item--title">Your Time</h3>
                   <h3 class="score__item score__item--final-time">252</h3>
                   <h3 class="score__item score__item--base-time">5252</h3>
@@ -143,7 +129,9 @@
                 </div>
               </fieldset>
             </div>
-            <button class="visually-hidden" type="submit">Play</button>
+            <button class="btn form__btn visually-hidden" type="submit">
+              Play
+            </button>
           </form>
         </nav>
         <!-- Button -->
