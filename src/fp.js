@@ -90,15 +90,19 @@ function getShuffleArray(arr) {
 // Middlaware
 
 function checkTargetElem(elem) {
-  return elem.target.classList.contains("input-box")
+  return !elem.target.classList.contains("input-box")
 }
 
 function checkMarkedSelect(state) {
-  return state.isMarkedSelect
+  return state.isMarkedSelect === ""
+}
+
+function checkBtnPlayPush(state) {
+  return state.isBtnStartPush === true
 }
 
 function checkCountDownValue(state) {
-  return state.countDownValue === "0"
+  return state.countDownValue !== "0"
 }
 
 // Other
@@ -116,6 +120,7 @@ let gameState = {
   isShowCountDownPage: false,
   isShowSplashPage: true,
   isShowGamePage: false,
+  isBtnStartPush: false,
   countDownValue: countdownCaption.textContent,
   markedValue: "",
   equationsArray: [],
@@ -198,6 +203,12 @@ function showSplashPage(state) {
   })
 }
 
+function disabledBtnStart(state) {
+  btnStart.disabled = true
+
+  return Object.assign({}, state, { isBtnStartPush: true })
+}
+
 function hideCountDownPage(state) {
   countdownPage.hidden = true
 
@@ -272,7 +283,7 @@ function setResult(state) {
 // Game
 
 function selectQuestion(evt) {
-  if (!checkTargetElem(evt)) return
+  if (checkTargetElem(evt)) return
 
   compileResult(
     setMarkedValue,
@@ -291,9 +302,11 @@ function selectQuestion(evt) {
 }
 
 function startRound() {
-  if (!checkMarkedSelect(gameState)) return
+  if (checkMarkedSelect(gameState)) return
+  if (checkBtnPlayPush(gameState)) return
 
   compileResult(
+    disabledBtnStart,
     hideSplashPage,
     showCountDownPage,
     setCountDown,
@@ -302,7 +315,7 @@ function startRound() {
 }
 
 function runGame() {
-  if (!checkCountDownValue(gameState)) return
+  if (checkCountDownValue(gameState)) return
 
   compileResult(
     hideCountDownPage,
