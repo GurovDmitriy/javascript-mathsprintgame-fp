@@ -1,4 +1,8 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
+
+const navigationBox = document.querySelector(".navigation")
+
 // Pages
 
 const splashPage = document.getElementById("splash-page")
@@ -18,6 +22,9 @@ const countdownCaption = document.querySelector(".countdown__caption")
 // Game Page
 
 const quizBox = document.querySelector(".quiz")
+const btnQuizBox = document.querySelector(".btn-quiz-box")
+const btnWrong = document.querySelector(".btn--wrong")
+const btnRight = document.querySelector(".btn--right")
 
 // Core
 
@@ -105,6 +112,10 @@ function checkCountDownValue(state) {
   return state.countDownValue !== "0"
 }
 
+function checkQestionEnd(state) {
+  return state.activeQestion === state.equationsArray.length
+}
+
 // Other
 
 const questionsBox = document.querySelector(".questions")
@@ -121,9 +132,14 @@ let gameState = {
   isShowSplashPage: true,
   isShowGamePage: false,
   isBtnStartPush: false,
+  isBtnStartHidden: false,
   countDownValue: countdownCaption.textContent,
+  activeQestion: 1,
+  scrollPosition: 0,
+  scrollToEnd: 0,
   markedValue: "",
   equationsArray: [],
+  guessArray: [],
   questionAmount: 0,
   correctEquations: 0,
   wrongEquations: 0,
@@ -217,6 +233,12 @@ function hideCountDownPage(state) {
   })
 }
 
+function hideBtnStart(state) {
+  btnStart.hidden = true
+
+  return Object.assign({}, state, { isBtnStartHidden: true })
+}
+
 function showCountDownPage(state) {
   countdownPage.hidden = false
 
@@ -231,6 +253,12 @@ function showGamePage(state) {
   return Object.assign({}, state, {
     isShowGamePage: true,
   })
+}
+
+function showBtnQuiz(state) {
+  btnQuizBox.classList.add("btn-quiz-box--active")
+
+  return Object.assign({}, state, { isBtnQuizShow: true })
 }
 
 function setCountDown(state) {
@@ -261,9 +289,14 @@ function setCountDown(state) {
 function addEquationsToDOM(state) {
   const box = document.createElement("div")
 
-  state.equationsArray.forEach((eq) => {
+  state.equationsArray.forEach((eq, index) => {
     const item = document.createElement("p")
     item.classList.add("quiz__item")
+
+    if (index === 0) {
+      item.classList.add("quiz__item--active")
+    }
+
     item.textContent = eq.value
 
     box.appendChild(item)
@@ -272,6 +305,54 @@ function addEquationsToDOM(state) {
   quizBox.appendChild(box)
 
   return Object.assign({}, state)
+}
+
+function setScrollValues(state) {
+  const elemScrollHeight = navigationBox.scrollHeight
+  const elemClientHeight = navigationBox.clientHeight
+  const scrollToEnd = elemScrollHeight - elemClientHeight
+
+  console.log(elemScrollHeight, elemClientHeight)
+
+  return Object.assign({}, state, { scrollToEnd })
+}
+
+function setGuess(state, guess) {
+  state.guessArray.push(guess)
+
+  return Object.assign({}, state)
+}
+
+function scrollForm(state) {
+  value = state.scrollPosition
+
+  if (state.scrollPosition < state.scrollToEnd) {
+    value += 60
+
+    navigationBox.scrollTo({
+      top: value,
+      left: 0,
+      behavior: "smooth",
+    })
+  }
+
+  return Object.assign({}, state, { scrollPosition: value })
+}
+
+function setActiveQestion(state) {
+  let activeQestion = state.activeQestion
+
+  const prevQestion = document.querySelector(".quiz__item--active")
+  const nextQestion = document.querySelector(
+    ".quiz__item--active + .quiz__item"
+  )
+
+  prevQestion.classList.remove("quiz__item--active")
+  nextQestion.classList.add("quiz__item--active")
+
+  activeQestion += 1
+
+  return Object.assign({}, state, { activeQestion })
 }
 
 // Mutations
@@ -319,15 +400,35 @@ function runGame() {
 
   compileResult(
     hideCountDownPage,
+    hideBtnStart,
     addEquationsToDOM,
     showGamePage,
+    setScrollValues,
+    showBtnQuiz,
     setResult
   )(Object.assign({}, gameState))
 
   console.log(gameState)
 }
 
+function btnGuessPush(guess) {
+  if (checkQestionEnd(gameState)) return
+
+  compileResult(
+    setGuess,
+    scrollForm,
+    setActiveQestion,
+    setResult
+  )(Object.assign({}, gameState), guess)
+
+  console.log(gameState)
+}
+
 // Listeners
+
+// Remove default submit form
+
+formBox.addEventListener("submit", (evt) => evt.preventDefault())
 
 // Select question
 
@@ -337,6 +438,7 @@ questionsBox.addEventListener("click", selectQuestion)
 
 btnStart.addEventListener("click", startRound)
 
-// Remove default submit form
+// Plaer Guess
 
-formBox.addEventListener("submit", (evt) => evt.preventDefault())
+btnWrong.addEventListener("click", () => btnGuessPush("wrong"))
+btnRight.addEventListener("click", () => btnGuessPush("right"))

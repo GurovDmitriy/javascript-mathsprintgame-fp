@@ -254,9 +254,14 @@ legend {
 }
 
 .btn-quiz-box {
+  display: none;
   justify-content: space-evenly;
 
   width: 100%;
+}
+
+.btn-quiz-box--active {
+  display: flex;
 }
 
 .countdown {
