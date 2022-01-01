@@ -113,7 +113,7 @@ function checkCountDownValue(state) {
 }
 
 function checkQestionEnd(state) {
-  return state.activeQestion === state.equationsArray.length
+  return state.isQestionEnd === true
 }
 
 // Other
@@ -133,6 +133,7 @@ let gameState = {
   isShowGamePage: false,
   isBtnStartPush: false,
   isBtnStartHidden: false,
+  isQestionEnd: false,
   countDownValue: countdownCaption.textContent,
   activeQestion: 1,
   scrollPosition: 0,
@@ -343,16 +344,20 @@ function scrollForm(state) {
 
 function setActiveQestion(state) {
   let activeQestion = state.activeQestion
-
   const prevQestion = document.querySelector(".quiz__item--active")
   const nextQestion = document.querySelector(
     ".quiz__item--active + .quiz__item"
   )
 
-  prevQestion.classList.remove("quiz__item--active")
-  nextQestion.classList.add("quiz__item--active")
-
-  activeQestion += 1
+  if (activeQestion === state.questionAmount) {
+    activeQestion = null
+    state.isQestionEnd = true
+    prevQestion.classList.remove("quiz__item--active")
+  } else {
+    activeQestion += 1
+    prevQestion.classList.remove("quiz__item--active")
+    nextQestion.classList.add("quiz__item--active")
+  }
 
   return Object.assign({}, state, { activeQestion })
 }
