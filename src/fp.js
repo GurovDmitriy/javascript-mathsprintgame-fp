@@ -328,13 +328,15 @@ function scrollForm(state) {
 
   if (state.scrollPosition < state.scrollToEnd) {
     value += 60
-
-    navigationBox.scrollTo({
-      top: value,
-      left: 0,
-      behavior: "smooth",
-    })
+  } else {
+    value = state.scrollToEnd
   }
+
+  navigationBox.scrollTo({
+    top: value,
+    left: 0,
+    behavior: "smooth",
+  })
 
   return Object.assign({}, state, { scrollPosition: value })
 }
