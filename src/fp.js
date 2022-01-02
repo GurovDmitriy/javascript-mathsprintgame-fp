@@ -94,6 +94,18 @@ function getShuffleArray(arr) {
   return resultArr
 }
 
+function getFormatTime(time) {
+  const ms = time % 1000
+  let sec = Math.floor(time / 1000)
+  let min = Math.floor(sec / 60)
+  let hr = Math.floor(min / 60)
+
+  sec = sec >= 60 ? sec % 60 : sec
+  min = min >= 60 ? min % 60 : min
+
+  return { ms, sec, min, hr }
+}
+
 // Middlaware
 
 function checkTargetElem(elem) {
@@ -135,12 +147,17 @@ let gameState = {
   isBtnStartHidden: false,
   isQestionEnd: false,
   countDownValue: countdownCaption.textContent,
+  timer: 0,
+  timerFormat: null,
+  timePenalty: 0,
+  timeFinal: 0,
   activeQestion: 1,
   scrollPosition: 0,
   scrollToEnd: 0,
   markedValue: "",
   equationsArray: [],
   guessArray: [],
+  quizResult: null,
   questionAmount: 0,
   correctEquations: 0,
   wrongEquations: 0,
@@ -262,8 +279,25 @@ function showBtnQuiz(state) {
   return Object.assign({}, state, { isBtnQuizShow: true })
 }
 
+function startTimer(state) {
+  new Promise((resolve) => {
+    let timer = state.timer
+    const intervalValue = 10
+
+    const clearTimer = setInterval(() => {
+      if (gameState.isQestionEnd) {
+        clearInterval(clearTimer)
+        resolve(timer)
+      }
+      timer += intervalValue
+    }, intervalValue)
+  }).then((time) => stopTimer(time))
+
+  return Object.assign({}, state)
+}
+
 function setCountDown(state) {
-  const result = new Promise((resolve) => {
+  new Promise((resolve) => {
     let value = state.countDownValue
 
     ;(function count() {
@@ -278,9 +312,7 @@ function setCountDown(state) {
         count()
       }, 1000)
     })()
-  })
-
-  result.then(() => {
+  }).then(() => {
     runGame()
   })
 
@@ -312,8 +344,6 @@ function setScrollValues(state) {
   const elemScrollHeight = navigationBox.scrollHeight
   const elemClientHeight = navigationBox.clientHeight
   const scrollToEnd = elemScrollHeight - elemClientHeight
-
-  console.log(elemScrollHeight, elemClientHeight)
 
   return Object.assign({}, state, { scrollToEnd })
 }
@@ -360,6 +390,45 @@ function setActiveQestion(state) {
   }
 
   return Object.assign({}, state, { activeQestion })
+}
+
+function disableBtnGuess(state) {
+  if (state.isQestionEnd) {
+    btnWrong.disabled = "true"
+    btnRight.disabled = "true"
+  }
+
+  return Object.assign({}, state)
+}
+
+function setFormatGameTime(state) {
+  const time = state.timeFinal
+  const timerFormat = getFormatTime(time)
+
+  return Object.assign({}, state, { timerFormat })
+}
+
+function setQuizResult(state) {
+  let wrongGuess = 0
+  let rightGuess = 0
+
+  state.equationsArray.forEach((item, index) => {
+    if (item.evaluated === state.guessArray[index]) {
+      rightGuess += 1
+    } else {
+      wrongGuess += 1
+    }
+  })
+
+  return Object.assign({}, state, { quizResult: { wrongGuess, rightGuess } })
+}
+
+function setResultTime(state) {
+  const penalty = 500
+
+  const timeFinal = state.timer + state.quizResult.wrongGuess * penalty
+
+  return Object.assign({}, state, { timeFinal })
 }
 
 // Mutations
@@ -412,10 +481,9 @@ function runGame() {
     showGamePage,
     setScrollValues,
     showBtnQuiz,
+    startTimer,
     setResult
   )(Object.assign({}, gameState))
-
-  console.log(gameState)
 }
 
 function btnGuessPush(guess) {
@@ -425,8 +493,18 @@ function btnGuessPush(guess) {
     setGuess,
     scrollForm,
     setActiveQestion,
+    disableBtnGuess,
     setResult
   )(Object.assign({}, gameState), guess)
+}
+
+function stopTimer(time) {
+  compileResult(
+    setQuizResult,
+    setResultTime,
+    setFormatGameTime,
+    setResult
+  )(Object.assign({}, gameState, { timer: time }))
 
   console.log(gameState)
 }
@@ -447,5 +525,5 @@ btnStart.addEventListener("click", startRound)
 
 // Plaer Guess
 
-btnWrong.addEventListener("click", () => btnGuessPush("wrong"))
-btnRight.addEventListener("click", () => btnGuessPush("right"))
+btnWrong.addEventListener("click", () => btnGuessPush(false))
+btnRight.addEventListener("click", () => btnGuessPush(true))
