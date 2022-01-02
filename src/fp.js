@@ -196,7 +196,7 @@ let gameState = {
   equationsWrong: 0,
   guessArray: null,
   questionAmount: 0,
-  quizPenalty: 500,
+  quizPenalty: 1500,
   quizResult: null,
   timeQuizStep: 10,
   timeQuiz: 0,
@@ -554,13 +554,25 @@ function addResultGameToDOM(state) {
 
 function setScoreStorage(state) {
   let saveGame = getDataStorage("MathSprintGame") || {}
+  let saveGameNew = {}
   const keyQuestion = String(state.questionAmount)
+  const valueNew = state.timeQuizFinal
+  let valueOld = null
 
-  saveGameNew = {
-    [keyQuestion]: {
-      timeQuizFinalFormatted: state.timeQuizFinalFormatted,
-    },
-    ...saveGame,
+  if (Object.keys(saveGame).length !== 0) {
+    valueOld = saveGame[keyQuestion]
+  }
+
+  if (valueOld && valueOld > valueNew) {
+    saveGame[keyQuestion] = valueNew
+    saveGameNew = {
+      ...saveGame,
+    }
+  } else {
+    saveGameNew = {
+      [keyQuestion]: state.timeQuizFinal,
+      ...saveGame,
+    }
   }
 
   setDataStorage("MathSprintGame", saveGameNew)
