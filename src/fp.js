@@ -128,6 +128,24 @@ function getTimeFormattedStr(obj) {
   return timeStr
 }
 
+function getDataStorage(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key))
+  } catch (err) {
+    console.log("Error getting data from localStorage", e)
+    throw new Error(e.message, err)
+  }
+}
+
+function setDataStorage(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch (err) {
+    console.log("Error saving data in localStorage", err)
+    throw new Error(e.message, err)
+  }
+}
+
 // Middlaware
 
 function checkTargetElem(evt) {
@@ -532,6 +550,24 @@ function addResultGameToDOM(state) {
   return Object.assign({}, state)
 }
 
+// LocalStorage
+
+function setScoreStorage(state) {
+  let saveGame = getDataStorage("MathSprintGame") || {}
+  const keyQuestion = String(state.questionAmount)
+
+  saveGameNew = {
+    [keyQuestion]: {
+      timeQuizFinalFormatted: state.timeQuizFinalFormatted,
+    },
+    ...saveGame,
+  }
+
+  setDataStorage("MathSprintGame", saveGameNew)
+
+  return Object.assign({}, state)
+}
+
 // Mutations
 
 function setResult(state) {
@@ -608,6 +644,7 @@ function stopTimeQuiz(time) {
     addResultGameToDOM,
     hideBoxBtnsQuiz,
     showPageScore,
+    setScoreStorage,
     showBtnPlayAgain,
     setResult
   )(Object.assign({}, gameState, { timeQuiz: time }))
