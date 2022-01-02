@@ -128,6 +128,27 @@ function getTimeFormattedStr(obj) {
   return timeStr
 }
 
+function getTimeFormattedBestScoreStr(obj) {
+  const hr = obj.hr || null
+  const min = obj.min || null
+  const sec = obj.sec || null
+  const ms = obj.ms || null
+
+  let timeStr = "0"
+
+  if (hr) {
+    timeStr = `${obj.hr}h:${obj.min}m:${obj.sec}s:${obj.ms}ms`
+  } else if (min) {
+    timeStr = `${obj.min}m:${obj.sec}s:${obj.ms}ms`
+  } else if (sec) {
+    timeStr = `${obj.sec}s:${obj.ms}ms`
+  } else if (ms) {
+    timeStr = `${obj.ms}ms`
+  }
+
+  return timeStr
+}
+
 function getDataStorage(key) {
   try {
     return JSON.parse(localStorage.getItem(key))
@@ -154,6 +175,10 @@ function checkTargetElem(evt) {
 
 function checkChoiceMade(state) {
   return state.isChoiceMade === false
+}
+
+function checkPageGameHidden(state) {
+  return state.isPageGameShow === false
 }
 
 function checkBtnPlayPush(state) {
@@ -552,14 +577,32 @@ function addResultGameToDOM(state) {
 
 // LocalStorage
 
+function setScorePageSplash(state) {
+  let saveGame = getDataStorage("MathSprintGame") || null
+
+  if (saveGame) {
+    for (let item in saveGame) {
+      const selector = `label[for="value-${item}"] .best-score__value`
+      const elemBestScore = document.querySelector(selector)
+
+      const timeFormatted = getTimeFormatted(saveGame[item])
+      const timeFormattedStr = getTimeFormattedBestScoreStr(timeFormatted)
+
+      elemBestScore.textContent = timeFormattedStr
+    }
+  }
+
+  return Object.assign({}, state)
+}
+
 function setScoreStorage(state) {
-  let saveGame = getDataStorage("MathSprintGame") || {}
+  let saveGame = getDataStorage("MathSprintGame") || null
   let saveGameNew = {}
   const keyQuestion = String(state.questionAmount)
   const valueNew = state.timeQuizFinal
   let valueOld = null
 
-  if (Object.keys(saveGame).length !== 0) {
+  if (saveGame && saveGame[keyQuestion]) {
     valueOld = saveGame[keyQuestion]
   }
 
@@ -638,6 +681,7 @@ function runGame() {
 
 function btnsGuessPush(guess) {
   if (checkQuestionEnd(gameState)) return
+  if (checkPageGameHidden(gameState)) return
 
   pipeRunner(
     setGuess,
@@ -657,6 +701,7 @@ function stopTimeQuiz(time) {
     hideBoxBtnsQuiz,
     showPageScore,
     setScoreStorage,
+    setScorePageSplash,
     showBtnPlayAgain,
     setResult
   )(Object.assign({}, gameState, { timeQuiz: time }))
@@ -698,6 +743,23 @@ elemBtnStart.addEventListener("click", startRound)
 elemBtnWrong.addEventListener("click", () => btnsGuessPush(false))
 elemBtnRight.addEventListener("click", () => btnsGuessPush(true))
 
+window.addEventListener("keydown", (evt) => {
+  switch (evt.key) {
+    case "ArrowLeft":
+    case "w":
+      btnsGuessPush(false)
+      break
+    case "ArrowRight":
+    case "r":
+      btnsGuessPush(true)
+      break
+  }
+})
+
 // Play again
 
 elemBtnPlayAgain.addEventListener("click", playAgain)
+
+// Get score storage
+
+setScorePageSplash()
