@@ -305,6 +305,25 @@ legend {
   box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
 }
 
-.score__item {
+.table-score h3 {
   text-align: center;
+  text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+}
+
+.table-score th {
+  padding: 5px 10px;
+
+  text-align: right;
+  text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+}
+
+.table-score td {
+  padding: 10px 20px;
+
+  text-align-last: left;
+  text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+}
+
+.score__table-score {
+  margin: 0 auto;
 }

@@ -122,10 +122,25 @@
                 <legend class="fieldset__legend">Score</legend>
                 <!-- Score Container -->
                 <div class="score fieldset__score">
-                  <h3 class="score__item score__item--title">Your Time</h3>
-                  <h3 class="score__item score__item--final-time">252</h3>
-                  <h3 class="score__item score__item--base-time">5252</h3>
-                  <h3 class="score__item score__item--penalty-time">222</h3>
+                  <table class="table-score score__table-score">
+                    <tr class="score__item score__item--title">
+                      <th colspan="2"><h3>Your Time</h3></th>
+                    </tr>
+                    <tr class="table-score__item table-score__item--final-time">
+                      <th>Final</th>
+                      <td>0</td>
+                    </tr>
+                    <tr class="table-score__item table-score__item--base-time">
+                      <th>Base</th>
+                      <td>0</td>
+                    </tr>
+                    <tr
+                      class="table-score__item table-score__item--penalty-time"
+                    >
+                      <th>Penalty</th>
+                      <td>0</td>
+                    </tr>
+                  </table>
                 </div>
               </fieldset>
             </div>
@@ -137,7 +152,9 @@
         <!-- Button -->
         <section class="btn-box form__btn-box">
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
-          <button class="btn btn--start btn-box__btn">Start Round</button>
+          <button class="btn btn--start btn-box__btn" disabled>
+            Start Round
+          </button>
           <!-- Right/Wrong Buttons -->
           <div class="btn-quiz-box btn-box__btn-quiz-box">
             <button class="btn btn--wrong btn-quiz-box__btn">Wrong</button>
