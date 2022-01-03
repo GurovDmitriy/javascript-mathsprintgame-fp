@@ -9,6 +9,7 @@ const elemPageSplash = document.getElementById("splash-page")
 const elemPageCountdown = document.getElementById("countdown-page")
 const elemPageGame = document.getElementById("game-page")
 const elemPageScore = document.getElementById("score-page")
+const elemPageError = document.getElementById("error-page")
 
 // Splash Page
 
@@ -19,6 +20,10 @@ const elemsQuestion = document.querySelectorAll(".input-box")
 // Countdown Page
 
 const elemCaptionCountdown = document.querySelector(".countdown__caption")
+
+// Error Page
+
+const elemCaptionError = document.querySelector(".error__caption")
 
 // Game Page
 
@@ -55,16 +60,12 @@ function pipeRunner(...fns) {
 
 // Error Custom
 
-class CustomError {
-  constructor(obj) {
-    this.name = "CustomError"
-    this.message = obj.err.message
-    this.messageCustom = obj.messageCustom || "Some Erorr..."
-    this.functionErrorCustom = obj.functionErrorCustom
+class ErrorCustom extends Error {
+  constructor(message) {
+    super(message)
+    this.name = "ErrorCustom"
   }
 }
-
-CustomError.prototype = Object.create(Error.prototype)
 
 // Helpers
 
@@ -163,27 +164,11 @@ function getTimeFormattedBestScoreStr(obj) {
 }
 
 function getDataStorage(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key))
-  } catch (err) {
-    throw new CustomError({
-      messageCustom: "Error getting data from localStorage",
-      functionErrorCustom: "getDataStorage",
-      err,
-    })
-  }
+  return JSON.parse(localStorage.getItem(key))
 }
 
 function setDataStorage(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch (err) {
-    throw new CustomError({
-      messageCustom: "Error saving data in localStorage",
-      functionErrorCustom: "setDataStorage",
-      err,
-    })
-  }
+  localStorage.setItem(key, JSON.stringify(data))
 }
 
 // Middlaware
@@ -223,6 +208,7 @@ let gameState = {
   isPageCountdownShow: false,
   isPageGameShow: false,
   isPageScoreShow: false,
+  isPageErrorShow: false,
   isBoxBtnsQuizBoxShow: false,
   isBtnStartShow: true,
   isBtnPlayAgainShow: false,
@@ -387,6 +373,22 @@ function hidePageScore(state) {
   })
 }
 
+function showPageError(state) {
+  elemPageError.hidden = false
+
+  return Object.assign({}, state, {
+    isPageErrorShow: true,
+  })
+}
+
+function hidePageError(state) {
+  elemPageError.hidden = true
+
+  return Object.assign({}, state, {
+    isPageErrorShow: false,
+  })
+}
+
 // Show - Hide elem btn
 
 function showBtnStart(state) {
@@ -440,7 +442,9 @@ function startTimeQuiz(state) {
         time += step
       }
     }, step)
-  }).then((timeQuiz) => stopTimeQuiz(timeQuiz))
+  })
+    .then((timeQuiz) => stopTimeQuiz(timeQuiz))
+    .catch((err) => showErrorCustom(err))
 
   return Object.assign({}, state)
 }
@@ -463,9 +467,11 @@ function setCountdown(state) {
         count()
       }, 1000)
     })()
-  }).then(() => {
-    runGame()
   })
+    .then(() => {
+      runGame()
+    })
+    .catch((err) => showErrorCustom(err))
 
   return Object.assign({}, state, { countdownValue: 0 })
 }
@@ -598,29 +604,21 @@ function addResultGameToDOM(state) {
 // LocalStorage
 
 function setScorePageSplash(state) {
-  try {
-    let saveGame = getDataStorage("MathSprintGame") || null
+  let saveGame = getDataStorage("MathSprintGame") || null
 
-    if (saveGame) {
-      for (let item in saveGame) {
-        const selector = `label[for="value-${item}"] .best-score__value`
-        const elemBestScore = document.querySelector(selector)
+  if (saveGame) {
+    for (let item in saveGame) {
+      const selector = `label[for="value-${item}"] .best-score__value`
+      const elemBestScore = document.querySelector(selector)
 
-        const timeFormatted = getTimeFormatted(saveGame[item])
-        const timeFormattedStr = getTimeFormattedBestScoreStr(timeFormatted)
+      const timeFormatted = getTimeFormatted(saveGame[item])
+      const timeFormattedStr = getTimeFormattedBestScoreStr(timeFormatted)
 
-        elemBestScore.textContent = timeFormattedStr
-      }
+      elemBestScore.textContent = timeFormattedStr
     }
-
-    return Object.assign({}, state)
-  } catch (err) {
-    throw new CustomError({
-      messageCustom: "Error set score to splash page",
-      functionErrorCustom: "setScorePageSplash",
-      err,
-    })
   }
+
+  return Object.assign({}, state)
 }
 
 function setScoreStorage(state) {
@@ -660,14 +658,23 @@ function setResult(state) {
 // Error
 
 function logError(state) {
+  const startSearch = state.error.stack.indexOf(" at ", 0)
+  const endSearch = state.error.stack.indexOf("(", startSearch)
+  const errorFunction = state.error.stack.slice(startSearch, endSearch).trim()
+
   console.log(
     `Error ${String.fromCodePoint(0x26d4)}
 
-    ${String.fromCodePoint(0x1f4eb)} ${state.error.messageCustom}
-    ${String.fromCodePoint(0x1f41e)} ${state.error.functionErrorCustom}
-    ${String.fromCodePoint(0x1f381)} ${state.error.message}
+    ${String.fromCodePoint(0x1f41e)} ${state.error.message}
+    ${String.fromCodePoint(0x1f381)} ${errorFunction}
     `
   )
+
+  return Object.assign({}, state)
+}
+
+function addErrorMessage(state) {
+  elemCaptionError.textContent = state.error.message
 
   return Object.assign({}, state)
 }
@@ -675,140 +682,200 @@ function logError(state) {
 // Game
 
 function selectQuestion(evt) {
-  if (checkTargetElem(evt)) return
+  try {
+    if (checkTargetElem(evt)) return
 
-  pipeRunner(
-    setMarkedValue,
-    removeMarkedChoice,
-    setMarkedChoice,
-    setQuestionAmount,
-    setEquationsCount,
-    setEquationsArray,
-    setShuffleEquationsArray,
-    enableBtnStart,
-    setResult
-  )(
-    Object.assign({}, gameState, {
-      markedValue: evt.target,
-    })
-  )
+    pipeRunner(
+      setMarkedValue,
+      removeMarkedChoice,
+      setMarkedChoice,
+      setQuestionAmount,
+      setEquationsCount,
+      setEquationsArray,
+      setShuffleEquationsArray,
+      enableBtnStart,
+      setResult
+    )(
+      Object.assign({}, gameState, {
+        markedValue: evt.target,
+      })
+    )
+  } catch (err) {
+    throw new ErrorCustom("Error preparing data for the game")
+  }
 }
 
 function startRound() {
-  if (checkChoiceMade(gameState)) return
-  if (checkBtnPlayPush(gameState)) return
+  try {
+    if (checkChoiceMade(gameState)) return
+    if (checkBtnPlayPush(gameState)) return
 
-  pipeRunner(
-    disableBtnStart,
-    hidePageSplash,
-    showPageCountdown,
-    setCountdown,
-    setResult
-  )(Object.assign({}, gameState))
+    pipeRunner(
+      disableBtnStart,
+      hidePageSplash,
+      showPageCountdown,
+      setCountdown,
+      setResult
+    )(Object.assign({}, gameState))
+  } catch (err) {
+    throw new ErrorCustom("Error countdown timer")
+  }
 }
 
 function runGame() {
-  if (checkCountdownValue(gameState)) return
+  try {
+    if (checkCountdownValue(gameState)) return
 
-  pipeRunner(
-    hidePageCountdown,
-    hideBtnStart,
-    addEquationsToDOM,
-    showPageGame,
-    setScrollValues,
-    showBoxBtnsQuiz,
-    startTimeQuiz,
-    setResult
-  )(Object.assign({}, gameState))
+    pipeRunner(
+      hidePageCountdown,
+      hideBtnStart,
+      addEquationsToDOM,
+      showPageGame,
+      setScrollValues,
+      showBoxBtnsQuiz,
+      startTimeQuiz,
+      setResult
+    )(Object.assign({}, gameState))
+  } catch (err) {
+    throw new ErrorCustom("Error run quiz")
+  }
 }
 
 function btnsGuessPush(guess) {
-  if (checkQuestionEnd(gameState)) return
-  if (checkPageGameHidden(gameState)) return
+  try {
+    if (checkQuestionEnd(gameState)) return
+    if (checkPageGameHidden(gameState)) return
 
-  pipeRunner(
-    setGuess,
-    scrollForm,
-    setActiveQuestion,
-    setResult
-  )(Object.assign({}, gameState), guess)
+    pipeRunner(
+      setGuess,
+      scrollForm,
+      setActiveQuestion,
+      setResult
+    )(Object.assign({}, gameState), guess)
+  } catch (err) {
+    throw new ErrorCustom("Error push buttons quiz")
+  }
 }
 
 function stopTimeQuiz(time) {
-  pipeRunner(
-    setResultQuiz,
-    setResultTime,
-    setTimeQuizFormatted,
-    hidePageGame,
-    addResultGameToDOM,
-    hideBoxBtnsQuiz,
-    showPageScore,
-    setScoreStorage,
-    setScorePageSplash,
-    showBtnPlayAgain,
-    setResult
-  )(Object.assign({}, gameState, { timeQuiz: time }))
-
-  console.log("state after STOPTIMER: \n", gameState)
+  try {
+    pipeRunner(
+      setResultQuiz,
+      setResultTime,
+      setTimeQuizFormatted,
+      hidePageGame,
+      addResultGameToDOM,
+      hideBoxBtnsQuiz,
+      showPageScore,
+      setScoreStorage,
+      setScorePageSplash,
+      showBtnPlayAgain,
+      setResult
+    )(Object.assign({}, gameState, { timeQuiz: time }))
+  } catch (err) {
+    throw new ErrorCustom("Error stop time quiz")
+  }
 }
 
 function playAgain() {
-  if (checkBtnPlayAgainPush(gameState)) return
+  try {
+    if (checkBtnPlayAgainPush(gameState)) return
 
-  pipeRunner(
-    hideBtnPlayAgain,
-    hidePageScore,
-    removeMarkedChoice,
-    showPageSplash,
-    showBtnStart,
-    setResult
-  )(Object.assign({}, gameStateDefault))
-
-  console.log("state after PLAYAGAIN: \n", gameState)
+    pipeRunner(
+      hidePageError,
+      hideBtnPlayAgain,
+      hidePageScore,
+      removeMarkedChoice,
+      showPageSplash,
+      showBtnStart,
+      setResult
+    )(Object.assign({}, gameStateDefault))
+  } catch (err) {
+    throw new ErrorCustom("Error play again")
+  }
 }
 
-// Errors
-
-function runLogError(err) {
-  pipeRunner(logError, setResult)(Object.assign({}, gameState, { error: err }))
-
-  console.log("state after RUNLOGERROR: \n", gameState)
+function showErrorCustom(err) {
+  pipeRunner(
+    logError,
+    hidePageSplash,
+    hidePageCountdown,
+    hidePageGame,
+    hidePageScore,
+    hideBtnStart,
+    hideBoxBtnsQuiz,
+    addErrorMessage,
+    showPageError,
+    showBtnPlayAgain,
+    setResult
+  )(Object.assign({}, gameState, { error: err, isBtnPlayAgainShow: true }))
 }
 
 // Select question
 
-elemQuestions.addEventListener("click", selectQuestion)
+elemQuestions.addEventListener("click", (evt) => {
+  try {
+    selectQuestion(evt)
+  } catch (err) {
+    showErrorCustom(err)
+  }
+})
 
 // Start round btn
 
-elemBtnStart.addEventListener("click", startRound)
+elemBtnStart.addEventListener("click", () => {
+  try {
+    startRound()
+  } catch (err) {
+    showErrorCustom(err)
+  }
+})
 
 // Player guess
 
-elemBtnWrong.addEventListener("click", () => btnsGuessPush(false))
-elemBtnRight.addEventListener("click", () => btnsGuessPush(true))
+elemBtnWrong.addEventListener("click", () => {
+  try {
+    btnsGuessPush(false)
+  } catch (err) {
+    showErrorCustom(err)
+  }
+})
+
+elemBtnRight.addEventListener("click", () => {
+  try {
+    btnsGuessPush(true)
+  } catch (err) {
+    showErrorCustom(err)
+  }
+})
 
 window.addEventListener("keydown", (evt) => {
-  switch (evt.key) {
-    case "ArrowLeft":
-    case "w":
-      btnsGuessPush(false)
-      break
-    case "ArrowRight":
-    case "r":
-      btnsGuessPush(true)
-      break
+  try {
+    switch (evt.key) {
+      case "ArrowLeft":
+      case "w":
+        btnsGuessPush(false)
+        break
+      case "ArrowRight":
+      case "r":
+        btnsGuessPush(true)
+        break
+    }
+  } catch (err) {
+    showErrorCustom(err)
   }
 })
 
 // Play again
 
-elemBtnPlayAgain.addEventListener("click", playAgain)
+elemBtnPlayAgain.addEventListener("click", () => {
+  try {
+    playAgain()
+  } catch (err) {
+    showErrorCustom(err)
+  }
+})
 
 // Get score storage
 
-try {
-  setScorePageSplash()
-} catch (err) {
-  runLogError(err)
-}
+setScorePageSplash()
