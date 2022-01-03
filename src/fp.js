@@ -53,6 +53,19 @@ function pipeRunner(...fns) {
   return fns.reduce(pipe)
 }
 
+// Error Custom
+
+class CustomError {
+  constructor(obj) {
+    this.name = "CustomError"
+    this.message = obj.err.message
+    this.customMessage = obj.customMessage || "Some Erorr..."
+    this.customFunctionError = obj.functionError
+  }
+}
+
+CustomError.prototype = Object.create(Error.prototype)
+
 // Helpers
 
 function getRandom(min = 0, max = 5) {
@@ -153,8 +166,11 @@ function getDataStorage(key) {
   try {
     return JSON.parse(localStorage.getItem(key))
   } catch (err) {
-    console.log("Error getting data from localStorage", e)
-    throw new Error(e.message, err)
+    throw new CustomError({
+      customMessage: "Error getting data from localStorage",
+      functionError: "getDataStorage",
+      err,
+    })
   }
 }
 
@@ -162,8 +178,11 @@ function setDataStorage(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data))
   } catch (err) {
-    console.log("Error saving data in localStorage", err)
-    throw new Error(e.message, err)
+    throw new CustomError({
+      customMessage: "Error saving data in localStorage",
+      functionError: "setDataStorage",
+      err,
+    })
   }
 }
 
@@ -230,6 +249,7 @@ let gameState = {
   timeQuizFormatted: null,
   timeQuizFinalFormatted: null,
   timeQuizPenaltyFormatted: null,
+  error: null,
 }
 
 const gameStateDefault = { ...gameState }
@@ -578,21 +598,29 @@ function addResultGameToDOM(state) {
 // LocalStorage
 
 function setScorePageSplash(state) {
-  let saveGame = getDataStorage("MathSprintGame") || null
+  try {
+    let saveGame = getDataStorage("MathSprintGame") || null
 
-  if (saveGame) {
-    for (let item in saveGame) {
-      const selector = `label[for="value-${item}"] .best-score__value`
-      const elemBestScore = document.querySelector(selector)
+    if (saveGame) {
+      for (let item in saveGame) {
+        const selector = `label[for="value-${item}"] .best-score__value`
+        const elemBestScore = document.querySelector(selector)
 
-      const timeFormatted = getTimeFormatted(saveGame[item])
-      const timeFormattedStr = getTimeFormattedBestScoreStr(timeFormatted)
+        const timeFormatted = getTimeFormatted(saveGame[item])
+        const timeFormattedStr = getTimeFormattedBestScoreStr(timeFormatted)
 
-      elemBestScore.textContent = timeFormattedStr
+        elemBestScore.textContent = timeFormattedStr
+      }
     }
-  }
 
-  return Object.assign({}, state)
+    return Object.assign({}, state)
+  } catch (err) {
+    throw new CustomError({
+      customMessage: "Error set score to splash page",
+      functionError: "setScorePageSplash",
+      err,
+    })
+  }
 }
 
 function setScoreStorage(state) {
@@ -627,6 +655,18 @@ function setScoreStorage(state) {
 
 function setResult(state) {
   gameState = { ...state }
+}
+
+// Error
+
+function logError(state) {
+  console.log(
+    " message:  " + state.error.customMessage + "\n",
+    "function: " + state.error.customFunctionError + "\n",
+    "error:    " + state.error.message
+  )
+
+  return Object.assign({}, state)
 }
 
 // Game
@@ -706,7 +746,7 @@ function stopTimeQuiz(time) {
     setResult
   )(Object.assign({}, gameState, { timeQuiz: time }))
 
-  console.log("state after STOPTIMER: ", gameState)
+  console.log("state after STOPTIMER: \n", gameState)
 }
 
 function playAgain() {
@@ -721,14 +761,16 @@ function playAgain() {
     setResult
   )(Object.assign({}, gameStateDefault))
 
-  console.log("state after PLAYAGAIN: ", gameState)
+  console.log("state after PLAYAGAIN: \n", gameState)
 }
 
-// Listeners
+// Errors
 
-// Remove default submit form
+function runLogError(err) {
+  pipeRunner(logError, setResult)(Object.assign({}, gameState, { error: err }))
 
-elemForm.addEventListener("submit", (evt) => evt.preventDefault())
+  console.log("state after RUNLOGERROR: \n", gameState)
+}
 
 // Select question
 
@@ -762,4 +804,8 @@ elemBtnPlayAgain.addEventListener("click", playAgain)
 
 // Get score storage
 
-setScorePageSplash()
+try {
+  setScorePageSplash()
+} catch (err) {
+  runLogError(err)
+}
