@@ -1,13 +1,20 @@
 html,
 body {
   box-sizing: border-box;
-  min-width: 360px;
+  min-width: 380px;
 
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
 
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  html,
+  body {
+    font-size: 16px;
+  }
 }
 
 *,
@@ -73,11 +80,17 @@ legend {
 
   min-height: 100vh;
   margin: 0;
-  padding: 40px 0;
+  padding: 20px 0;
 
   font-family: Arial, Helvetica, sans-serif;
 
   background-color: #e0e0e0;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .body {
+    padding: 40px 0;
+  }
 }
 
 .game {
@@ -86,13 +99,22 @@ legend {
 
   width: 90%;
   max-width: 600px;
-  height: 700px;
+  height: 600px;
 
   background-color: #e0e0e0;
-  border-radius: 50px;
-  box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+  border-radius: 30px;
+  box-shadow: 15px 15px 45px #bebebe, -15px -15px 45px #ffffff;
 
   user-select: none;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .game {
+    height: 700px;
+
+    border-radius: 40px;
+    box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+  }
 }
 
 .game__header {
@@ -115,19 +137,34 @@ legend {
   overflow-y: scroll;
 
   background: #e0e0e0;
-  border-radius: 20px;
-  box-shadow: inset 10px 10px 30px #bebebe, inset -10px -10px 30px #ffffff;
+  border-radius: 14px;
+  box-shadow: inset 8px 8px 22px #bebebe, inset -8px -8px 22px #ffffff;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .navigation {
+    border-radius: 20px;
+    box-shadow: inset 10px 10px 30px #bebebe, inset -10px -10px 30px #ffffff;
+  }
 }
 
 .header__caption {
   margin: 0;
-  padding: 30px 0;
+  padding: 20px 0;
 
-  font-size: 2.623rem;
+  font-size: 2.4rem;
   line-height: 1.548;
   text-align: center;
 
   text-shadow: 4px 4px 6px rgb(0 0 0 / 35%);
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .header__caption {
+    padding: 30px 0;
+
+    font-size: 2.623rem;
+  }
 }
 
 .form {
@@ -176,11 +213,22 @@ legend {
   justify-content: space-between;
 
   width: 90%;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 
   background-color: #e0e0e0;
-  border-radius: 15px;
-  box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+  border-radius: 10px;
+  box-shadow: 8px 8px 22px #bebebe, -8px -8px 22px #ffffff;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .input-box {
+    width: 90%;
+    margin-bottom: 40px;
+
+    background-color: #e0e0e0;
+    border-radius: 15px;
+    box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+  }
 }
 
 .input-box:last-child {
@@ -193,30 +241,62 @@ legend {
 }
 
 .best-score {
-  display: flex;
-  align-content: center;
-  align-items: center;
-  justify-content: space-between;
+  width: 40%;
+  overflow: hidden;
 
-  width: 26%;
+  color: rgb(0 0 0 / 40%);
+  line-height: 0;
+  text-align: right;
+  text-overflow: ellipsis;
 
   pointer-events: none;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .best-score {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    justify-content: space-between;
+    width: 30%;
+  }
 }
 
 .best-score__caption {
   margin: 0;
 
+  color: #000000;
+
+  font-weight: 400;
   font-size: 0.813rem;
-  line-height: 1.769;
+  line-height: 1.2;
+  text-align: right;
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .best-score__caption {
+    font-size: 0.813rem;
+    line-height: 1.769;
+  }
 }
 
 .best-score__value {
   margin: 0;
 
-  font-size: 0.813rem;
-  line-height: 1.769;
-  text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
+  color: rgb(0 0 0 / 40%);
+
+  font-size: 0.76rem;
+  line-height: 1.2;
+  text-align: right;
+  text-shadow: none;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+  .best-score__value {
+    font-size: 0.813rem;
+    line-height: 1.769;
+  }
 }
 
 .btn-box {
@@ -227,8 +307,7 @@ legend {
 
   box-sizing: content-box;
   min-height: 47px;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding: 30px 0;
 }
 
 .btn-box > * {
@@ -249,8 +328,12 @@ legend {
   background: none;
   background-color: #e0e0e0;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+}
+
+.btn:disabled {
+  color: rgb(0 0 0 / 40%);
 }
 
 .btn-quiz-box {

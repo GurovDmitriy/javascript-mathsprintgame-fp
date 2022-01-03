@@ -59,8 +59,8 @@ class CustomError {
   constructor(obj) {
     this.name = "CustomError"
     this.message = obj.err.message
-    this.customMessage = obj.customMessage || "Some Erorr..."
-    this.customFunctionError = obj.functionError
+    this.messageCustom = obj.messageCustom || "Some Erorr..."
+    this.functionErrorCustom = obj.functionErrorCustom
   }
 }
 
@@ -167,8 +167,8 @@ function getDataStorage(key) {
     return JSON.parse(localStorage.getItem(key))
   } catch (err) {
     throw new CustomError({
-      customMessage: "Error getting data from localStorage",
-      functionError: "getDataStorage",
+      messageCustom: "Error getting data from localStorage",
+      functionErrorCustom: "getDataStorage",
       err,
     })
   }
@@ -179,8 +179,8 @@ function setDataStorage(key, data) {
     localStorage.setItem(key, JSON.stringify(data))
   } catch (err) {
     throw new CustomError({
-      customMessage: "Error saving data in localStorage",
-      functionError: "setDataStorage",
+      messageCustom: "Error saving data in localStorage",
+      functionErrorCustom: "setDataStorage",
       err,
     })
   }
@@ -616,8 +616,8 @@ function setScorePageSplash(state) {
     return Object.assign({}, state)
   } catch (err) {
     throw new CustomError({
-      customMessage: "Error set score to splash page",
-      functionError: "setScorePageSplash",
+      messageCustom: "Error set score to splash page",
+      functionErrorCustom: "setScorePageSplash",
       err,
     })
   }
@@ -661,9 +661,12 @@ function setResult(state) {
 
 function logError(state) {
   console.log(
-    " message:  " + state.error.customMessage + "\n",
-    "function: " + state.error.customFunctionError + "\n",
-    "error:    " + state.error.message
+    `Error ${String.fromCodePoint(0x26d4)}
+
+    ${String.fromCodePoint(0x1f4eb)} ${state.error.messageCustom}
+    ${String.fromCodePoint(0x1f41e)} ${state.error.functionErrorCustom}
+    ${String.fromCodePoint(0x1f381)} ${state.error.message}
+    `
   )
 
   return Object.assign({}, state)
