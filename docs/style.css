@@ -1,3 +1,5 @@
+/* stylelint-disable no-descending-specificity */
+
 html,
 body {
   box-sizing: border-box;
@@ -21,6 +23,10 @@ body {
 *::after,
 *::before {
   box-sizing: inherit;
+}
+
+*:focus {
+  outline: none;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -311,7 +317,7 @@ legend {
 }
 
 .btn {
-  width: 160px;
+  width: 140px;
   min-height: 47px;
   margin: 0;
   padding: 10px 20px;
@@ -326,6 +332,12 @@ legend {
   border: none;
   border-radius: 10px;
   box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+}
+
+@media (min-width: 600px) and (min-height: 740px) {
+  .btn {
+    width: 160px;
+  }
 }
 
 .btn:disabled {
@@ -345,15 +357,51 @@ legend {
 
 .countdown {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
 .countdown__caption {
+  margin-right: 2px;
+  margin-bottom: 0;
+
   font-size: 2.625em;
   line-height: 1.548;
   text-transform: capitalize;
   text-shadow: 4px 4px 6px rgb(0 0 0 / 35%);
+}
+
+.control-table {
+  color: rgb(0 0 0 / 40%);
+
+  line-height: 0;
+}
+
+.control-table td {
+  padding: 8px;
+}
+
+.control-table th {
+  padding: 5px;
+
+  line-height: 1.2;
+}
+
+.control-table td:first-child {
+  text-align: right;
+}
+
+.control-table td:last-child {
+  text-align: left;
+}
+
+.control-table td:only-child {
+  text-align: center;
+}
+
+.control-table th:only-child {
+  text-align: center;
 }
 
 .error {
@@ -372,13 +420,23 @@ legend {
   margin-bottom: 20px;
   padding: 0 20px;
 
-  font-size: 1.625em;
+  font-size: 1.625rem;
   line-height: 1.615;
   text-align: center;
   text-transform: capitalize;
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
 
   border-radius: 10px;
+}
+
+.quiz__item span {
+  display: inline-block;
+
+  color: rgb(0 0 0 / 40%);
+
+  font-size: 1.225rem;
+  text-shadow: none;
+  vertical-align: middle;
 }
 
 .quiz__item:last-child {
@@ -403,7 +461,7 @@ legend {
 }
 
 .table-score td {
-  padding: 10px 20px;
+  padding: 5px 10px;
 
   text-align-last: left;
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);

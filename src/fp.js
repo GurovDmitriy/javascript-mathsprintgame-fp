@@ -1,8 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable no-unused-vars */
-
-const elemNavigation = document.querySelector(".navigation")
-
 // Pages
 
 const elemPageSplash = document.getElementById("splash-page")
@@ -11,29 +6,27 @@ const elemPageGame = document.getElementById("game-page")
 const elemPageScore = document.getElementById("score-page")
 const elemPageError = document.getElementById("error-page")
 
-// Splash Page
+// Elem
 
-const elemForm = document.querySelector(".form")
-const elemBtnStart = document.querySelector(".btn--start")
-const elemsQuestion = document.querySelectorAll(".input-box")
-
-// Countdown Page
-
+const elemNavigation = document.querySelector(".navigation")
 const elemCaptionCountdown = document.querySelector(".countdown__caption")
-
-// Error Page
-
 const elemCaptionError = document.querySelector(".error__caption")
-
-// Game Page
-
 const elemQuiz = document.querySelector(".quiz")
-const elemBoxBtnsQuiz = document.querySelector(".btn-quiz-box")
-const elemBtnWrong = document.querySelector(".btn--wrong")
-const elemBtnRight = document.querySelector(".btn--right")
 const elemQuestions = document.querySelector(".questions")
 
-// Score Page
+// Elems
+
+const elemsQuestion = document.querySelectorAll(".input-box")
+
+// Btns
+
+const elemBtnStart = document.querySelector(".btn--start")
+const elemBtnsQuiz = document.querySelector(".btn-quiz-box")
+const elemBtnWrong = document.querySelector(".btn--wrong")
+const elemBtnRight = document.querySelector(".btn--right")
+const elemBtnPlayAgain = document.querySelector(".btn--play-again")
+
+// Score
 
 const elemFinalTime = document.querySelector(
   ".table-score__item--final-time > td"
@@ -45,7 +38,44 @@ const elemPenaltyTime = document.querySelector(
   ".table-score__item--penalty-time > td"
 )
 
-const elemBtnPlayAgain = document.querySelector(".btn--play-again")
+// Game state
+
+let gameState = {
+  isPageSplashShow: true,
+  isPageCountdownShow: false,
+  isPageGameShow: false,
+  isPageScoreShow: false,
+  isPageErrorShow: false,
+  isBtnsQuizShow: false,
+  isBtnStartShow: true,
+  isBtnPlayAgainShow: false,
+  isBtnStartPush: false,
+  isChoiceMade: false,
+  isQuestionEnd: false,
+  markedValue: null,
+  countdownValue: 3,
+  scrollPosition: 0,
+  scrollToEnd: 0,
+  scrollStep: null,
+  activeQuestion: 1,
+  equationsArray: null,
+  equationsRight: 0,
+  equationsWrong: 0,
+  guessArray: null,
+  questionAmount: 0,
+  quizPenalty: 1500,
+  quizResult: null,
+  timeQuizStep: 10,
+  timeQuiz: 0,
+  timeQuizFinal: 0,
+  timeQuizPenalty: 0,
+  timeQuizFormatted: null,
+  timeQuizFinalFormatted: null,
+  timeQuizPenaltyFormatted: null,
+  error: null,
+}
+
+const gameStateDefault = { ...gameState }
 
 // Core
 
@@ -78,7 +108,7 @@ function getRightEquations() {
   const firstNumber = getRandom(0, 9)
   const secondNumber = getRandom(0, 9)
   const equationValue = firstNumber * secondNumber
-  const equation = `${firstNumber} x ${secondNumber} = ${equationValue}`
+  const equation = `${firstNumber} <span>x</span> ${secondNumber} <span>=</span> ${equationValue}`
   return { value: equation, evaluated: true }
 }
 
@@ -87,9 +117,15 @@ function getWrongEquations() {
   const secondNumber = getRandom(0, 9)
   const equationValue = firstNumber * secondNumber
   const equations = [
-    `${firstNumber + 1} x ${secondNumber} = ${equationValue}`,
-    `${firstNumber} x ${secondNumber + 1} = ${equationValue}`,
-    `${firstNumber + 1} x ${secondNumber} = ${equationValue + 1}`,
+    `${
+      firstNumber + 1
+    } <span>x</span> ${secondNumber} <span>=</span> ${equationValue}`,
+    `${firstNumber} <span>x</span> ${
+      secondNumber + 1
+    } <span>=</span> ${equationValue}`,
+    `${firstNumber} <span>x</span> ${secondNumber} <span>=</span> ${
+      equationValue + 1
+    }`,
   ]
   const equation = equations[getRandom(0, equations.length - 1)]
 
@@ -201,45 +237,6 @@ function checkQuestionEnd(state) {
   return state.isQuestionEnd === true
 }
 
-// Game state
-
-let gameState = {
-  isPageSplashShow: true,
-  isPageCountdownShow: false,
-  isPageGameShow: false,
-  isPageScoreShow: false,
-  isPageErrorShow: false,
-  isBoxBtnsQuizBoxShow: false,
-  isBtnStartShow: true,
-  isBtnPlayAgainShow: false,
-  isBtnStartPush: false,
-  isChoiceMade: false,
-  isQuestionEnd: false,
-  markedValue: null,
-  countdownValue: 3,
-  scrollPosition: 0,
-  scrollToEnd: 0,
-  scrollStep: 60,
-  activeQuestion: 1,
-  equationsArray: null,
-  equationsRight: 0,
-  equationsWrong: 0,
-  guessArray: null,
-  questionAmount: 0,
-  quizPenalty: 1500,
-  quizResult: null,
-  timeQuizStep: 10,
-  timeQuiz: 0,
-  timeQuizFinal: 0,
-  timeQuizPenalty: 0,
-  timeQuizFormatted: null,
-  timeQuizFinalFormatted: null,
-  timeQuizPenaltyFormatted: null,
-  error: null,
-}
-
-const gameStateDefault = { ...gameState }
-
 // Function for game
 
 function setMarkedValue(state) {
@@ -297,6 +294,7 @@ function setShuffleEquationsArray(state) {
 
 function enableBtnStart(state) {
   elemBtnStart.disabled = false
+  elemBtnStart.focus()
 
   return Object.assign({}, state, { isBtnStartPush: false })
 }
@@ -403,20 +401,21 @@ function hideBtnStart(state) {
   return Object.assign({}, state, { isBtnStartShow: false })
 }
 
-function showBoxBtnsQuiz(state) {
-  elemBoxBtnsQuiz.classList.add("btn-quiz-box--active")
+function showBtnsQuiz(state) {
+  elemBtnsQuiz.classList.add("btn-quiz-box--active")
 
-  return Object.assign({}, state, { isBoxBtnsQuizShow: true })
+  return Object.assign({}, state, { isBtnsQuizShow: true })
 }
 
-function hideBoxBtnsQuiz(state) {
-  elemBoxBtnsQuiz.classList.remove("btn-quiz-box--active")
+function hideBtnsQuiz(state) {
+  elemBtnsQuiz.classList.remove("btn-quiz-box--active")
 
-  return Object.assign({}, state, { isBoxBtnsQuizShow: false })
+  return Object.assign({}, state, { isBtnsQuizShow: false })
 }
 
 function showBtnPlayAgain(state) {
   elemBtnPlayAgain.hidden = false
+  elemBtnPlayAgain.focus()
 
   return Object.assign({}, state, { isBtnPlayAgainShow: true })
 }
@@ -489,7 +488,7 @@ function addEquationsToDOM(state) {
       item.classList.add("quiz__item--active")
     }
 
-    item.textContent = eq.value
+    item.insertAdjacentHTML("beforeend", eq.value)
 
     box.appendChild(item)
   })
@@ -499,23 +498,23 @@ function addEquationsToDOM(state) {
   return Object.assign({}, state)
 }
 
+// Scroll
+
 function setScrollValues(state) {
+  const elemItemQuizHeight =
+    document.querySelector(".quiz__item").clientHeight + 20
   const elemScrollHeight = elemNavigation.scrollHeight
   const elemClientHeight = elemNavigation.clientHeight
   const scrollToEnd = elemScrollHeight - elemClientHeight
 
-  return Object.assign({}, state, { scrollToEnd })
-}
-
-function setGuess(state, guess) {
-  const guessArray = state.guessArray ? [...state.guessArray] : []
-  guessArray.push(guess)
-
-  return Object.assign({}, state, { guessArray })
+  return Object.assign({}, state, {
+    scrollToEnd,
+    scrollStep: elemItemQuizHeight,
+  })
 }
 
 function scrollForm(state) {
-  value = state.scrollPosition
+  let value = state.scrollPosition
 
   if (state.scrollPosition < state.scrollToEnd) {
     value += state.scrollStep
@@ -530,6 +529,15 @@ function scrollForm(state) {
   })
 
   return Object.assign({}, state, { scrollPosition: value })
+}
+
+// Guess
+
+function setGuess(state, guess) {
+  const guessArray = state.guessArray ? [...state.guessArray] : []
+  guessArray.push(guess)
+
+  return Object.assign({}, state, { guessArray })
 }
 
 function setActiveQuestion(state) {
@@ -732,13 +740,15 @@ function runGame() {
       addEquationsToDOM,
       showPageGame,
       setScrollValues,
-      showBoxBtnsQuiz,
+      showBtnsQuiz,
       startTimeQuiz,
       setResult
     )(Object.assign({}, gameState))
   } catch (err) {
     throw new ErrorCustom("Error run quiz")
   }
+
+  console.log(gameState)
 }
 
 function btnsGuessPush(guess) {
@@ -765,7 +775,7 @@ function stopTimeQuiz(time) {
       setTimeQuizFormatted,
       hidePageGame,
       addResultGameToDOM,
-      hideBoxBtnsQuiz,
+      hideBtnsQuiz,
       showPageScore,
       setScoreStorage,
       setScorePageSplash,
@@ -803,13 +813,15 @@ function showErrorCustom(err) {
     hidePageGame,
     hidePageScore,
     hideBtnStart,
-    hideBoxBtnsQuiz,
+    hideBtnsQuiz,
     addErrorMessage,
     showPageError,
     showBtnPlayAgain,
     setResult
   )(Object.assign({}, gameState, { error: err, isBtnPlayAgainShow: true }))
 }
+
+// Listeners
 
 // Select question
 
