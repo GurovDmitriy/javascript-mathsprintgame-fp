@@ -94,6 +94,16 @@ class ErrorCustom extends Error {
   constructor(message) {
     super(message)
     this.name = "ErrorCustom"
+    this._fromFunction = null
+  }
+
+  get fromFunction() {
+    if (this._fromFunction !== null) return this._fromFunction
+    const startSearch = this.stack.indexOf(" at ", 0)
+    const endSearch = this.stack.indexOf("(", startSearch)
+    const errorFunction = this.stack.slice(startSearch, endSearch).trim()
+    this._fromFunction = errorFunction
+    return this._fromFunction
   }
 }
 
@@ -666,17 +676,15 @@ function setResult(state) {
 // Error
 
 function logError(state) {
-  const startSearch = state.error.stack.indexOf(" at ", 0)
-  const endSearch = state.error.stack.indexOf("(", startSearch)
-  const errorFunction = state.error.stack.slice(startSearch, endSearch).trim()
-
   console.log(
     `Error ${String.fromCodePoint(0x26d4)}
 
     ${String.fromCodePoint(0x1f41e)} ${state.error.message}
-    ${String.fromCodePoint(0x1f381)} ${errorFunction}
+    ${String.fromCodePoint(0x1f381)} ${state.error.fromFunction}
     `
   )
+
+  console.dir(state.error)
 
   return Object.assign({}, state)
 }
