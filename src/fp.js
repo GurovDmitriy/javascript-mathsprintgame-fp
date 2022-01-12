@@ -747,8 +747,6 @@ function runGame() {
   } catch (err) {
     throw new ErrorCustom("Error run quiz")
   }
-
-  console.log(gameState)
 }
 
 function btnsGuessPush(guess) {
