@@ -40,6 +40,8 @@ const elemPenaltyTime = document.querySelector(
 
 // Game state
 
+let errorGlobal = null
+
 let gameState = {
   isPageSplashShow: true,
   isPageCountdownShow: false,
@@ -64,7 +66,7 @@ let gameState = {
   guessArray: null,
   questionAmount: 0,
   quizPenalty: 1500,
-  quizResult: null,
+  quizResult: {},
   timeQuizStep: 10,
   timeQuiz: 0,
   timeQuizFinal: 0,
@@ -72,7 +74,6 @@ let gameState = {
   timeQuizFormatted: null,
   timeQuizFinalFormatted: null,
   timeQuizPenaltyFormatted: null,
-  error: null,
 }
 
 const gameStateDefault = { ...gameState }
@@ -108,6 +109,10 @@ class ErrorCustom extends Error {
 }
 
 // Helpers
+
+function cloneObjectWithJSON(obj) {
+  return JSON.parse(JSON.stringify(obj))
+}
 
 function getRandom(min = 0, max = 5) {
   let rand = min - 0.5 + Math.random() * (max - min + 1)
@@ -252,37 +257,40 @@ function checkQuestionEnd(state) {
 function setMarkedValue(state) {
   const target = state.markedValue
   const value = target.querySelector("input").id
+  state.markedValue = value
 
-  return Object.assign({}, state, { markedValue: value })
+  return cloneObjectWithJSON(state)
 }
 
 function removeMarkedChoice(state) {
   elemsQuestion.forEach((elem) => elem.classList.remove("input-box--active"))
+  state.isChoiceMade = false
 
-  return Object.assign({}, state, { isChoiceMade: false })
+  return cloneObjectWithJSON(state)
 }
 
 function setMarkedChoice(state) {
   const elem = document.getElementById(`${state.markedValue}`)
   elem.parentElement.classList.add("input-box--active")
+  state.isChoiceMade = true
 
-  return Object.assign({}, state, { isChoiceMade: true })
+  return cloneObjectWithJSON(state)
 }
 
 function setQuestionAmount(state) {
   const value = Number(state.markedValue.split("-")[1])
+  state.questionAmount = value
 
-  return Object.assign({}, state, { questionAmount: value })
+  return cloneObjectWithJSON(state)
 }
 
 function setEquationsCount(state) {
   const equationsRight = getRandom(1, state.questionAmount)
   const equationsWrong = state.questionAmount - equationsRight
+  state.equationsRight = equationsRight
+  state.equationsWrong = equationsWrong
 
-  return Object.assign({}, state, {
-    equationsRight,
-    equationsWrong,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function setEquationsArray(state) {
@@ -290,14 +298,16 @@ function setEquationsArray(state) {
   const wrongArray = getEquationsArray(state.equationsWrong, getWrongEquations)
 
   const equationsArray = [...rightArray, ...wrongArray]
+  state.equationsArray = equationsArray
 
-  return Object.assign({}, state, { equationsArray })
+  return cloneObjectWithJSON(state)
 }
 
 function setShuffleEquationsArray(state) {
   const shuffleArray = getShuffleArray(state.equationsArray)
+  state.shuffleArray = shuffleArray
 
-  return Object.assign({}, state, { equationsArray: shuffleArray })
+  return cloneObjectWithJSON(state)
 }
 
 // Enable - Disable elem
@@ -305,135 +315,133 @@ function setShuffleEquationsArray(state) {
 function enableBtnStart(state) {
   elemBtnStart.disabled = false
   elemBtnStart.focus()
+  state.isBtnStartPush = false
 
-  return Object.assign({}, state, { isBtnStartPush: false })
+  return cloneObjectWithJSON(state)
 }
 
 function disableBtnStart(state) {
   elemBtnStart.disabled = true
+  state.isBtnStartPush = true
 
-  return Object.assign({}, state, { isBtnStartPush: true })
+  return cloneObjectWithJSON(state)
 }
 
 // Show - Hide elem page
 
 function showPageSplash(state) {
   elemPageSplash.hidden = false
+  state.isPageSplashShow = true
 
-  return Object.assign({}, state, {
-    isPageSplashShow: true,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function hidePageSplash(state) {
   elemPageSplash.hidden = true
+  state.isPageSplashShow = false
 
-  return Object.assign({}, state, {
-    isPageSplashShow: false,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function showPageCountdown(state) {
   elemPageCountdown.hidden = false
+  state.isPageCountdownShow = true
 
-  return Object.assign({}, state, {
-    isPageCountdownShow: true,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function hidePageCountdown(state) {
   elemPageCountdown.hidden = true
+  state.isPageCountdownShow = false
 
-  return Object.assign({}, state, {
-    isPageCountdownShow: false,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function showPageGame(state) {
   elemPageGame.hidden = false
+  state.isPageGameShow = true
 
-  return Object.assign({}, state, {
-    isPageGameShow: true,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function hidePageGame(state) {
   elemPageGame.hidden = true
+  state.isPageGameShow = false
 
-  return Object.assign({}, state, {
-    isPageGameShow: false,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function showPageScore(state) {
   elemPageScore.hidden = false
+  state.isPageScoreShow = true
 
-  return Object.assign({}, state, {
-    isPageScoreShow: true,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function hidePageScore(state) {
   elemPageScore.hidden = true
+  state.isPageScoreShow = false
 
-  return Object.assign({}, state, {
-    isPageScoreShow: false,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function showPageError(state) {
   elemPageError.hidden = false
+  state.isPageErrorShow = true
 
-  return Object.assign({}, state, {
-    isPageErrorShow: true,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 function hidePageError(state) {
   elemPageError.hidden = true
+  state.isPageErrorShow = false
 
-  return Object.assign({}, state, {
-    isPageErrorShow: false,
-  })
+  return cloneObjectWithJSON(state)
 }
 
 // Show - Hide elem btn
 
 function showBtnStart(state) {
   elemBtnStart.hidden = false
+  state.isBtnStartShow = true
 
-  return Object.assign({}, state, { isBtnStartShow: true })
+  return cloneObjectWithJSON(state)
 }
 
 function hideBtnStart(state) {
   elemBtnStart.hidden = true
+  state.isBtnStartShow = false
 
-  return Object.assign({}, state, { isBtnStartShow: false })
+  return cloneObjectWithJSON(state)
 }
 
 function showBtnsQuiz(state) {
   elemBtnsQuiz.classList.add("btn-quiz-box--active")
+  state.isBtnsQuizShow = true
 
-  return Object.assign({}, state, { isBtnsQuizShow: true })
+  return cloneObjectWithJSON(state)
 }
 
 function hideBtnsQuiz(state) {
   elemBtnsQuiz.classList.remove("btn-quiz-box--active")
+  state.isBtnsQuizShow = false
 
-  return Object.assign({}, state, { isBtnsQuizShow: false })
+  return cloneObjectWithJSON(state)
 }
 
 function showBtnPlayAgain(state) {
   elemBtnPlayAgain.hidden = false
   elemBtnPlayAgain.focus()
+  state.isBtnPlayAgainShow = true
 
-  return Object.assign({}, state, { isBtnPlayAgainShow: true })
+  return cloneObjectWithJSON(state)
 }
 
 function hideBtnPlayAgain(state) {
   elemBtnPlayAgain.hidden = true
+  state.isBtnPlayAgainShow = false
 
-  return Object.assign({}, state, { isBtnPlayAgainShow: false })
+  return cloneObjectWithJSON(state)
 }
 
 // Time
@@ -455,7 +463,7 @@ function startTimeQuiz(state) {
     .then((timeQuiz) => stopTimeQuiz(timeQuiz))
     .catch((err) => showErrorCustom(err))
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 function setCountdown(state) {
@@ -482,7 +490,9 @@ function setCountdown(state) {
     })
     .catch((err) => showErrorCustom(err))
 
-  return Object.assign({}, state, { countdownValue: 0 })
+  state.countdownValue = 0
+
+  return cloneObjectWithJSON(state)
 }
 
 function addEquationsToDOM(state) {
@@ -505,7 +515,7 @@ function addEquationsToDOM(state) {
 
   elemQuiz.appendChild(box)
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 // Scroll
@@ -517,10 +527,10 @@ function setScrollValues(state) {
   const elemClientHeight = elemNavigation.clientHeight
   const scrollToEnd = elemScrollHeight - elemClientHeight
 
-  return Object.assign({}, state, {
-    scrollToEnd,
-    scrollStep: elemItemQuizHeight,
-  })
+  state.scrollToEnd = scrollToEnd
+  state.scrollStep = elemItemQuizHeight
+
+  return cloneObjectWithJSON(state)
 }
 
 function scrollForm(state) {
@@ -538,7 +548,9 @@ function scrollForm(state) {
     behavior: "smooth",
   })
 
-  return Object.assign({}, state, { scrollPosition: value })
+  state.scrollPosition = value
+
+  return cloneObjectWithJSON(state)
 }
 
 // Guess
@@ -546,8 +558,9 @@ function scrollForm(state) {
 function setGuess(state, guess) {
   const guessArray = state.guessArray ? [...state.guessArray] : []
   guessArray.push(guess)
+  state.guessArray = guessArray
 
-  return Object.assign({}, state, { guessArray })
+  return cloneObjectWithJSON(state)
 }
 
 function setActiveQuestion(state) {
@@ -567,7 +580,9 @@ function setActiveQuestion(state) {
     nextQuestion.classList.add("quiz__item--active")
   }
 
-  return Object.assign({}, state, { activeQuestion })
+  state.activeQuestion = activeQuestion
+
+  return cloneObjectWithJSON(state)
 }
 
 function setTimeQuizFormatted(state) {
@@ -578,11 +593,11 @@ function setTimeQuizFormatted(state) {
   const timeQuizFinalFormatted = getTimeFormatted(timeQuizFinal)
   const timeQuizPenaltyFormatted = getTimeFormatted(timeQuizPenalty)
 
-  return Object.assign({}, state, {
-    timeQuizFormatted,
-    timeQuizFinalFormatted,
-    timeQuizPenaltyFormatted,
-  })
+  state.timeQuizFormatted = timeQuizFormatted
+  state.timeQuizFinalFormatted = timeQuizFinalFormatted
+  state.timeQuizPenaltyFormatted = timeQuizPenaltyFormatted
+
+  return cloneObjectWithJSON(state)
 }
 
 function setResultQuiz(state) {
@@ -597,7 +612,10 @@ function setResultQuiz(state) {
     }
   })
 
-  return Object.assign({}, state, { quizResult: { wrongGuess, rightGuess } })
+  state.quizResult.wrongGuess = wrongGuess
+  state.quizResult.rightGuess = rightGuess
+
+  return cloneObjectWithJSON(state)
 }
 
 function setResultTime(state) {
@@ -606,7 +624,10 @@ function setResultTime(state) {
 
   const timeQuizFinal = state.timeQuiz + timeQuizPenalty
 
-  return Object.assign({}, state, { timeQuizFinal, timeQuizPenalty })
+  state.timeQuizFinal = timeQuizFinal
+  state.timeQuizPenalty = timeQuizPenalty
+
+  return cloneObjectWithJSON(state)
 }
 
 function addResultGameToDOM(state) {
@@ -616,7 +637,7 @@ function addResultGameToDOM(state) {
     state.timeQuizPenaltyFormatted
   )
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 // LocalStorage
@@ -636,7 +657,7 @@ function setScorePageSplash(state) {
     }
   }
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 function setScoreStorage(state) {
@@ -664,35 +685,37 @@ function setScoreStorage(state) {
 
   setDataStorage("MathSprintGame", saveGameNew)
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 // Mutations
 
 function setResult(state) {
-  gameState = { ...state }
+  gameState = state
+  return cloneObjectWithJSON(state)
 }
 
 // Error
 
-function logError(state) {
+function logError(state, err) {
+  errorGlobal = err
   console.log(
     `Error ${String.fromCodePoint(0x26d4)}
 
-    ${String.fromCodePoint(0x1f41e)} ${state.error.message}
-    ${String.fromCodePoint(0x1f381)} ${state.error.fromFunction}
+    ${String.fromCodePoint(0x1f41e)} ${errorGlobal.message}
+    ${String.fromCodePoint(0x1f381)} ${errorGlobal.fromFunction}
     `
   )
 
-  console.dir(state.error)
+  console.dir(errorGlobal)
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 function addErrorMessage(state) {
-  elemCaptionError.textContent = state.error.message
+  elemCaptionError.textContent = errorGlobal.message
 
-  return Object.assign({}, state)
+  return cloneObjectWithJSON(state)
 }
 
 // Game
@@ -732,7 +755,7 @@ function startRound() {
       showPageCountdown,
       setCountdown,
       setResult
-    )(Object.assign({}, gameState))
+    )(cloneObjectWithJSON(gameState))
   } catch (err) {
     throw new ErrorCustom("Error countdown timer")
   }
@@ -751,7 +774,7 @@ function runGame() {
       showBtnsQuiz,
       startTimeQuiz,
       setResult
-    )(Object.assign({}, gameState))
+    )(cloneObjectWithJSON(gameState))
   } catch (err) {
     throw new ErrorCustom("Error run quiz")
   }
@@ -767,7 +790,7 @@ function btnsGuessPush(guess) {
       scrollForm,
       setActiveQuestion,
       setResult
-    )(Object.assign({}, gameState), guess)
+    )(cloneObjectWithJSON(gameState), guess)
   } catch (err) {
     throw new ErrorCustom("Error push buttons quiz")
   }
@@ -805,7 +828,7 @@ function playAgain() {
       showPageSplash,
       showBtnStart,
       setResult
-    )(Object.assign({}, gameStateDefault))
+    )(cloneObjectWithJSON(gameStateDefault))
   } catch (err) {
     throw new ErrorCustom("Error play again")
   }
@@ -824,7 +847,7 @@ function showErrorCustom(err) {
     showPageError,
     showBtnPlayAgain,
     setResult
-  )(Object.assign({}, gameState, { error: err, isBtnPlayAgainShow: true }))
+  )(Object.assign({}, gameState, { isBtnPlayAgainShow: true }), err)
 }
 
 // Listeners
@@ -896,4 +919,4 @@ elemBtnPlayAgain.addEventListener("click", () => {
 
 // Get score storage
 
-setScorePageSplash()
+setScorePageSplash(cloneObjectWithJSON(gameState))
