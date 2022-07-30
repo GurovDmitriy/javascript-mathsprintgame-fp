@@ -53,3 +53,4 @@ node_modules
 # sylelintignore #
 ###################
 docs/*.js
+build/*.js

@@ -5,11 +5,11 @@ module.exports = {
   mode: "development",
   entry: "./src/index.js",
   devServer: {
-    static: "./docs",
+    static: "./build",
   },
   output: {
     filename: "script.js",
-    path: path.resolve(__dirname, "docs"),
+    path: path.resolve(__dirname, "build"),
   },
   module: {
     rules: [

@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "webpack serve --open",
-    "build": "npm run lint && webpack --mode production",
+    "build": "yarn lint && webpack --mode production",
     "deploy": "gh-pages -d build",
-    "predeploy": "npm run build",
-    "lint": "npm run lint:eslint && npm run lint:stylelint && npm run lint:prettier",
+    "predeploy": "yarn build",
+    "lint": "yarn lint:eslint && yarn lint:stylelint && yarn lint:prettier",
     "lint:eslint": "eslint --fix --ext \".js\" --ignore-path .eslintignore .",
     "lint:stylelint": "stylelint --fix \"**/*.{css,html}\" --ignore-path .stylelintignore",
     "lint:prettier": "prettier --write \"**/*.{js,css,html,md}\" --ignore-path .prettierignore",
@@ -20,7 +20,7 @@
     "*.{js,css,html,md}": "prettier --write"
   },
   "author": "Gurov Dmitriy",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.16.0",
     "@babel/preset-env": "^7.16.0",
@@ -43,5 +43,6 @@
     "webpack": "^5.64.4",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.6.0"
-  }
+  },
+  "dependencies": {}
 }
