@@ -1,3 +1,3 @@
-# learn-js-mathsprintgame
+# Learn JavaScript (Functional Programming) - Math Sprint Game
 
 ---

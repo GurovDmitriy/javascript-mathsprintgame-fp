@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "webpack serve --open",
-    "build": "yarn lint && webpack --mode production",
+    "build": "npm run lint && webpack --mode production",
     "deploy": "gh-pages -d build",
-    "predeploy": "yarn build",
-    "lint": "yarn lint:eslint && yarn lint:stylelint && yarn lint:prettier",
+    "predeploy": "npm run build",
+    "lint": "npm run lint:eslint && npm run lint:stylelint && npm run lint:prettier",
     "lint:eslint": "eslint --fix --ext \".js\" --ignore-path .eslintignore .",
     "lint:stylelint": "stylelint --fix \"**/*.{css,html}\" --ignore-path .stylelintignore",
     "lint:prettier": "prettier --write \"**/*.{js,css,html,md}\" --ignore-path .prettierignore",
