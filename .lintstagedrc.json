@@ -1,0 +1,7 @@
+{
+  "**/*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts}": "eslint .",
+  "**/*.{vue,css,less,scss,html}": "stylelint --fix --allow-empty-input --ignore-path .stylelintignore",
+  "**/*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts,css,scss,less,md,json}": [
+    "prettier --write --ignore-path .prettierignore"
+  ]
+}

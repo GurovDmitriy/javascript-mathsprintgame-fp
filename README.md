@@ -1,3 +1,5 @@
-# Learn JavaScript (Functional Programming) - Math Sprint Game
+# JavaScript - Math Sprint Game
 
 ---
+
+Learn JavaScript with functional programming way.

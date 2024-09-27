@@ -1,11 +1,19 @@
 {
   "extends": [
+    "stylelint-config-rational-order-fix",
     "stylelint-config-html",
-    "stylelint-config-rational-order",
     "stylelint-config-standard",
-    "stylelint-config-prettier"
+    "stylelint-config-standard-scss",
+    "stylelint-config-standard-vue/scss"
   ],
-  "plugins": ["stylelint-order", "stylelint-config-rational-order/plugin"],
+
+  "plugins": ["stylelint-order", "stylelint-config-rational-order-fix/plugin"],
+  "overrides": [
+    {
+      "files": ["*.html", "**/*.html"],
+      "customSyntax": "postcss-html"
+    }
+  ],
   "rules": {
     "order/properties-order": [],
     "plugin/rational-order": [
@@ -23,9 +31,14 @@
       "always-multi-line",
       { "except": ["first-nested"] }
     ],
-    "max-empty-lines": 1,
     "color-hex-length": "long",
-    "color-hex-case": "lower",
-    "selector-class-pattern": "[a-z]+"
+    "selector-class-pattern": "\\w+",
+    "selector-id-pattern": null,
+    "at-rule-no-unknown": null,
+    "function-no-unknown": null,
+    "selector-pseudo-class-no-unknown": null,
+    "font-family-no-duplicate-names": null,
+    "no-empty-source": null,
+    "no-invalid-position-at-import-rule": null
   }
 }

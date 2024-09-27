@@ -12,7 +12,7 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   html,
   body {
     font-size: 16px;
@@ -93,7 +93,7 @@ legend {
   background-color: #e0e0e0;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .body {
     padding: 40px 0;
   }
@@ -109,19 +109,23 @@ legend {
 
   background-color: #e0e0e0;
   border-radius: 30px;
-  box-shadow: 15px 15px 45px #bebebe, -15px -15px 45px #ffffff;
+  box-shadow:
+    15px 15px 45px #bebebe,
+    -15px -15px 45px #ffffff;
 
   user-select: none;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .game {
     max-width: 600px;
     height: 86vh;
     max-height: 700px;
 
     border-radius: 36px;
-    box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+    box-shadow:
+      20px 20px 60px #bebebe,
+      -20px -20px 60px #ffffff;
   }
 }
 
@@ -146,13 +150,17 @@ legend {
 
   background: #e0e0e0;
   border-radius: 14px;
-  box-shadow: inset 8px 8px 22px #bebebe, inset -8px -8px 22px #ffffff;
+  box-shadow:
+    inset 8px 8px 22px #bebebe,
+    inset -8px -8px 22px #ffffff;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .navigation {
     border-radius: 26px;
-    box-shadow: inset 10px 10px 30px #bebebe, inset -10px -10px 30px #ffffff;
+    box-shadow:
+      inset 10px 10px 30px #bebebe,
+      inset -10px -10px 30px #ffffff;
   }
 }
 
@@ -167,7 +175,7 @@ legend {
   text-shadow: 4px 4px 6px rgb(0 0 0 / 35%);
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .header__caption {
     padding: 30px 0;
 
@@ -179,8 +187,7 @@ legend {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  align-content: center;
-  justify-content: center;
+  place-content: center center;
 }
 
 .questions {
@@ -192,9 +199,9 @@ legend {
 .input-box__label {
   display: flex;
   flex-wrap: wrap;
-  align-content: center;
+  place-content: center space-between;
+
   align-items: center;
-  justify-content: space-between;
 
   width: 100%;
   min-height: 57px;
@@ -216,26 +223,30 @@ legend {
 .input-box {
   display: flex;
   flex-wrap: wrap;
-  align-content: center;
+  place-content: center space-between;
+
   align-items: center;
-  justify-content: space-between;
 
   width: 90%;
   margin-bottom: 30px;
 
   background-color: #e0e0e0;
   border-radius: 10px;
-  box-shadow: 8px 8px 22px #bebebe, -8px -8px 22px #ffffff;
+  box-shadow:
+    8px 8px 22px #bebebe,
+    -8px -8px 22px #ffffff;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .input-box {
     width: 90%;
     margin-bottom: 40px;
 
     background-color: #e0e0e0;
     border-radius: 12px;
-    box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+    box-shadow:
+      10px 10px 30px #bebebe,
+      -10px -10px 30px #ffffff;
   }
 }
 
@@ -245,7 +256,9 @@ legend {
 
 .input-box--active {
   background-color: #ededed;
-  box-shadow: 6px 6px 18px #bebebe, -6px -6px 18px #ffffff;
+  box-shadow:
+    6px 6px 18px #bebebe,
+    -6px -6px 18px #ffffff;
 }
 
 .best-score {
@@ -272,7 +285,7 @@ legend {
   text-shadow: 2px 2px 3px rgb(0 0 0 / 35%);
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .best-score__caption {
     font-size: 0.813rem;
   }
@@ -289,7 +302,7 @@ legend {
   text-shadow: none;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .best-score__value {
     font-size: 0.813rem;
   }
@@ -306,7 +319,7 @@ legend {
   padding: 30px 0;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .btn-box {
     padding: 40px 0;
   }
@@ -331,10 +344,12 @@ legend {
   background-color: #e0e0e0;
   border: none;
   border-radius: 10px;
-  box-shadow: 10px 10px 30px #bebebe, -10px -10px 30px #ffffff;
+  box-shadow:
+    10px 10px 30px #bebebe,
+    -10px -10px 30px #ffffff;
 }
 
-@media (min-width: 600px) and (min-height: 740px) {
+@media (width >= 600px) and (height >= 740px) {
   .btn {
     width: 160px;
   }
@@ -445,7 +460,9 @@ legend {
 
 .quiz__item--active {
   background: linear-gradient(145deg, #f0f0f0, #cacaca);
-  box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+  box-shadow:
+    20px 20px 60px #bebebe,
+    -20px -20px 60px #ffffff;
 }
 
 .table-score h3 {
