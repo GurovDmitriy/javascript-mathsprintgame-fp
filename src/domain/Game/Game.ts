@@ -1,7 +1,8 @@
 import { inject, injectable } from "inversify"
 import { BehaviorSubject } from "rxjs"
 import { TYPES } from "../../app/CompositionRoot/types"
-import type { ErrorHandler, GameConfig } from "../../interfaces"
+import { GameConfiguration } from "../../app/GameConfig"
+import type { ErrorHandler } from "../../interfaces"
 
 interface Equations {
   values: number[]
@@ -20,12 +21,11 @@ interface State {
 export class Game {
   private stateSubject
   private errorHandler
-  private readonly config: GameConfig
 
   public state
 
   constructor(
-    @inject(TYPES.GameConfig) config: GameConfig,
+    private readonly config: GameConfiguration,
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
   ) {
     this.stateSubject = new BehaviorSubject<State>({

@@ -14,18 +14,16 @@ import type { Component, ErrorHandler, RootElement } from "../../interfaces"
 
 @injectable()
 export class SelectQuestion implements Component {
-  #rootElement: Element
-  #errorService: ErrorHandler
-  #game: Game
+  private rootElement: Element
+  private errorService: ErrorHandler
 
   constructor(
     @inject(TYPES.RootElement) rootElement: RootElement,
     @inject(TYPES.ErrorHandler) errorService: ErrorHandler,
-    @inject(TYPES.GameModel) game: Game,
+    private game: Game,
   ) {
-    this.#errorService = errorService
-    this.#game = game
-    this.#rootElement = rootElement.element
+    this.errorService = errorService
+    this.rootElement = rootElement.element
   }
 
   init() {
@@ -36,7 +34,7 @@ export class SelectQuestion implements Component {
   destroy() {}
 
   handle() {
-    return fromEvent(this.#rootElement, "click").pipe(
+    return fromEvent(this.rootElement, "click").pipe(
       filter((event) => {
         const target = event.target as HTMLElement
         if (!target) throw Error("No found element")
@@ -53,16 +51,16 @@ export class SelectQuestion implements Component {
 
         return Number.parseInt(element.value)
       }),
-      tap((questionCount) => this.#game.setQuestionValue(questionCount)),
+      tap((questionCount) => this.game.setQuestionValue(questionCount)),
       catchError((error) => {
-        this.#errorService.handle(error)
+        this.errorService.handle(error)
         return of(error)
       }),
     )
   }
 
   render() {
-    return this.#game.state.pipe(
+    return this.game.state.pipe(
       distinctUntilChanged(
         (previous, current) => previous.questionValue === current.questionValue,
       ),

@@ -6,7 +6,7 @@ export class RootViewElement implements RootElement {
   element: Element
 
   constructor() {
-    const element = document.querySelector(".navigation__form")
+    const element = document.querySelector(".body__game")
 
     if (element) {
       this.element = element

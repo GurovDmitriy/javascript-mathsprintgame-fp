@@ -1,6 +1,8 @@
+import { Observable } from "rxjs"
+
 export interface Component {
-  init(): void
-  destroy(): void
-  handle(): void
-  render(): void
+  init(): void | Observable<any>
+  destroy(): void | Observable<any>
+  handle(): void | Observable<any>
+  render(): void | Observable<any>
 }
