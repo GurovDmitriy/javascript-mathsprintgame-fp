@@ -18,15 +18,16 @@ interface State {
 }
 
 @injectable()
-export class Game {
+export class GameMathSprint {
   private stateSubject
   private errorHandler
+  private readonly config: GameConfiguration
 
   public state
 
   constructor(
-    private readonly config: GameConfiguration,
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
+    config: GameConfiguration,
   ) {
     this.stateSubject = new BehaviorSubject<State>({
       active: false,
@@ -37,14 +38,13 @@ export class Game {
 
     this.errorHandler = errorHandler
 
-    this.config = {
-      penalty: 1500,
-      questions: [10, 25, 50, 99],
-    }
-    this.config = {
-      ...this.config,
-      ...config,
-    }
+    this.config = Object.assign(
+      {
+        penalty: 1500,
+        questions: [10, 25, 50, 99],
+      },
+      config,
+    )
   }
 
   setQuestionValue(value: number) {

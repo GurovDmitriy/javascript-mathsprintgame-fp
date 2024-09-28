@@ -9,21 +9,23 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/CompositionRoot/types"
-import { Game } from "../../domain/Game"
+import { GameMathSprint } from "../../domain/Game"
 import type { Component, ErrorHandler, RootElement } from "../../interfaces"
 
 @injectable()
 export class SelectQuestion implements Component {
   private rootElement: Element
   private errorService: ErrorHandler
+  private game: GameMathSprint
 
   constructor(
     @inject(TYPES.RootElement) rootElement: RootElement,
     @inject(TYPES.ErrorHandler) errorService: ErrorHandler,
-    private game: Game,
+    game: GameMathSprint,
   ) {
     this.errorService = errorService
     this.rootElement = rootElement.element
+    this.game = game
   }
 
   init() {
