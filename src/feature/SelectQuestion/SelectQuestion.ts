@@ -9,22 +9,30 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/CompositionRoot/types"
-import { GameMathSprint } from "../../domain/Game"
-import type { Component, ErrorHandler, RootElement } from "../../interfaces"
+import type {
+  Component,
+  ErrorHandler,
+  Game,
+  Remote,
+  RootElement,
+} from "../../interfaces"
 
 @injectable()
 export class SelectQuestion implements Component {
   private rootElement: Element
   private errorService: ErrorHandler
-  private game: GameMathSprint
+  private game: Game
+  private remote: Remote
 
   constructor(
     @inject(TYPES.RootElement) rootElement: RootElement,
-    @inject(TYPES.ErrorHandler) errorService: ErrorHandler,
-    game: GameMathSprint,
+    @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
+    @inject(TYPES.Game) game: Game,
+    @inject(TYPES.Remote) remote: Remote,
   ) {
-    this.errorService = errorService
+    this.errorService = errorHandler
     this.rootElement = rootElement.element
+    this.remote = remote
     this.game = game
   }
 
@@ -53,7 +61,7 @@ export class SelectQuestion implements Component {
 
         return Number.parseInt(element.value)
       }),
-      tap((questionCount) => this.game.setQuestionValue(questionCount)),
+      tap((questionCount) => this.remote.choice(questionCount)),
       catchError((error) => {
         this.errorService.handle(error)
         return of(error)

@@ -2,23 +2,15 @@ import { inject, injectable } from "inversify"
 import { BehaviorSubject } from "rxjs"
 import { TYPES } from "../../app/CompositionRoot/types"
 import { GameConfiguration } from "../../app/GameConfig"
-import type { ErrorHandler } from "../../interfaces"
-
-interface Equations {
-  values: number[]
-  type: "multiply" | "division"
-  result: number
-  evaluated: boolean
-}
-
-interface State {
-  active: boolean
-  questionValue: number
-  equations: Equations[]
-}
+import type {
+  ErrorHandler,
+  Game,
+  GameEquations,
+  GameState,
+} from "../../interfaces"
 
 @injectable()
-export class GameMathSprint {
+export class GameMathSprint implements Game {
   private stateSubject
   private errorHandler
   private readonly config: GameConfiguration
@@ -29,7 +21,7 @@ export class GameMathSprint {
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
     config: GameConfiguration,
   ) {
-    this.stateSubject = new BehaviorSubject<State>({
+    this.stateSubject = new BehaviorSubject<GameState>({
       active: false,
       questionValue: 0,
       equations: [],
@@ -47,7 +39,7 @@ export class GameMathSprint {
     )
   }
 
-  setQuestionValue(value: number) {
+  choice(value: number) {
     this.stateSubject.next({
       ...this.stateSubject.getValue(),
       questionValue: value,
@@ -67,6 +59,9 @@ export class GameMathSprint {
     })
   }
 
+  controlA() {}
+  controlB() {}
+
   private getRightEquations() {
     const firstNumber = this.getRandom(0, 9)
     const secondNumber = this.getRandom(0, 9)
@@ -76,7 +71,7 @@ export class GameMathSprint {
       type: "multiply",
       result: equationValue,
       evaluated: true,
-    } satisfies Equations
+    } satisfies GameEquations
   }
 
   private getRandom(min = 0, max = 5) {

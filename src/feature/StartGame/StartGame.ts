@@ -1,28 +1,46 @@
 import { inject, injectable } from "inversify"
-import { catchError, filter, fromEvent, of, pairwise, tap } from "rxjs"
+import {
+  catchError,
+  filter,
+  finalize,
+  fromEvent,
+  of,
+  switchMap,
+  take,
+  tap,
+  timer,
+} from "rxjs"
 import { TYPES } from "../../app/CompositionRoot/types"
-import { GameMathSprint } from "../../domain/Game"
-import type { Component, ErrorHandler, RootElement } from "../../interfaces"
+import type {
+  Component,
+  ErrorHandler,
+  Game,
+  Remote,
+  RootElement,
+} from "../../interfaces"
 
 @injectable()
 export class StartGame implements Component {
   private rootElement: Element
   private errorService: ErrorHandler
-  private game: GameMathSprint
+  private game: Game
+  private remote: Remote
 
   constructor(
     @inject(TYPES.RootElement) rootElement: RootElement,
-    @inject(TYPES.ErrorHandler) errorService: ErrorHandler,
-    game: GameMathSprint,
+    @inject(TYPES.RootElement) errorHandler: ErrorHandler,
+    @inject(TYPES.Game) game: Game,
+    @inject(TYPES.Remote) remote: Remote,
   ) {
-    this.errorService = errorService
+    this.errorService = errorHandler
     this.rootElement = rootElement.element
     this.game = game
+    this.remote = remote
   }
 
   init() {
     this.handle().subscribe()
-    this.render().subscribe()
+    this.render()
   }
 
   destroy() {}
@@ -35,7 +53,38 @@ export class StartGame implements Component {
 
         return target.classList.contains("btn--start")
       }),
-      tap(() => this.game.play()),
+      take(1),
+      tap(() => {
+        const pageSplash = document.getElementById("splash-page")
+        const pageCountdown = document.getElementById("countdown-page")
+        if (pageSplash && pageCountdown) {
+          pageSplash.hidden = true
+          pageCountdown.hidden = false
+        }
+      }),
+      switchMap(() => {
+        return timer(0, 1000).pipe(
+          take(5),
+          tap((count) => {
+            const elementCountdown = document.querySelector(
+              ".countdown__caption",
+            )
+            if (elementCountdown) {
+              elementCountdown.textContent = String(3 - count)
+            }
+          }),
+        )
+      }),
+      finalize(() => {
+        const pageCountdown = document.getElementById("countdown-page")
+        const pageGame = document.getElementById("game-page")
+        if (pageCountdown && pageGame) {
+          pageCountdown.hidden = true
+          pageGame.hidden = false
+
+          this.remote.start()
+        }
+      }),
       catchError((error) => {
         this.errorService.handle(error)
         return of(error)
@@ -43,16 +92,5 @@ export class StartGame implements Component {
     )
   }
 
-  render() {
-    return this.game.state.pipe(
-      pairwise(),
-      filter(([prev, current]) => !prev.active && current.active),
-      tap(() => {
-        const pageSplash = document.getElementById("splash-page")
-        if (pageSplash) {
-          pageSplash.hidden = true
-        }
-      }),
-    )
-  }
+  render() {}
 }
