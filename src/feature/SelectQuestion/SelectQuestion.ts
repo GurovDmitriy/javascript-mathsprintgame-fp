@@ -1,3 +1,4 @@
+import { compile } from "handlebars"
 import { inject, injectable } from "inversify"
 import {
   catchError,
@@ -6,86 +7,101 @@ import {
   fromEvent,
   map,
   of,
+  takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/CompositionRoot/types"
-import type {
-  Component,
-  ErrorHandler,
-  Game,
-  Remote,
-  RootElement,
-} from "../../interfaces"
+import { TYPES } from "../../app/compositionRoot/types"
+import { ComponentBase } from "../../core/framework/ComponentBase"
+import type { ErrorHandler, Game, Remote } from "../../interfaces"
+
+interface State {
+  questions: { classSelected: string; value: number }[]
+}
 
 @injectable()
-export class SelectQuestion implements Component {
-  private rootElement: Element
-  private errorService: ErrorHandler
-  private game: Game
-  private remote: Remote
-
+export class SelectQuestion extends ComponentBase<any, State> {
   constructor(
-    @inject(TYPES.RootElement) rootElement: RootElement,
-    @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
-    @inject(TYPES.Game) game: Game,
-    @inject(TYPES.Remote) remote: Remote,
+    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
+    @inject(TYPES.Game) private game: Game,
+    @inject(TYPES.Remote) private remote: Remote,
   ) {
-    this.errorService = errorHandler
-    this.rootElement = rootElement.element
-    this.remote = remote
-    this.game = game
+    super({
+      questions: [{ classSelected: "", value: 0 }],
+    })
   }
 
   init() {
-    this.handle().subscribe()
-    this.render().subscribe()
+    this.game.state
+      .pipe(
+        takeUntil(this.unsubscribe),
+        distinctUntilChanged(
+          (previous, current) =>
+            previous.questionValue === current.questionValue,
+        ),
+        tap((state) => {
+          this.stateSubject.next({
+            ...this.stateSubject.getValue(),
+            questions: this.game.config.questions.map((q) => {
+              return {
+                classSelected:
+                  state.questionValue === q ? "input-box--active" : "",
+                value: q,
+              }
+            }),
+          })
+        }),
+      )
+      .subscribe()
   }
 
-  destroy() {}
-
-  handle() {
-    return fromEvent(this.rootElement, "click").pipe(
-      filter((event) => {
-        const target = event.target as HTMLElement
-        if (!target) throw Error("No found element")
-
-        return target.classList.contains("input-box")
-      }),
-      map((event) => {
-        const target = event.target as HTMLElement
-        if (!target) throw Error("No found element")
-
-        const element =
-          target.querySelector<HTMLInputElement>(".input-box__input")
-        if (!element) throw Error("No found element")
-
-        return Number.parseInt(element.value)
-      }),
-      tap((questionCount) => this.remote.choice(questionCount)),
-      catchError((error) => {
-        this.errorService.handle(error)
-        return of(error)
-      }),
-    )
+  mounted() {
+    fromEvent(document, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        filter((event) => {
+          const target = event.target as HTMLElement
+          return target.classList.contains("input-box")
+        }),
+        map((event) => {
+          const target = event.target as HTMLElement
+          return Number.parseInt(target.dataset.question as string)
+        }),
+        tap((questionCount) => this.remote.choice(questionCount)),
+        catchError((error) => {
+          this.errorHandler.handle(error)
+          return of(error)
+        }),
+      )
+      .subscribe()
   }
 
   render() {
-    return this.game.state.pipe(
-      distinctUntilChanged(
-        (previous, current) => previous.questionValue === current.questionValue,
-      ),
-      tap(() => {
-        const inputs = document.querySelectorAll(".input-box__input")
-        inputs.forEach((i) =>
-          i.parentElement?.classList.remove("input-box--active"),
-        )
-      }),
-      map((data) => {
-        return document.getElementById(`value-${data.questionValue}`)
-      }),
-      tap((elementActive) => {
-        elementActive?.parentElement?.classList.add("input-box--active")
-      }),
-    )
+    const template = compile(`
+      <fieldset class="fieldset form__fieldset" id="splash-page">
+        <legend class="fieldset__legend">Questions</legend>
+        <div class="questions fieldset__questions">
+          {{#each questions}}
+            <div class="input-box questions__input-box {{this.classSelected}}" data-question="{{this.value}}">
+              <label class="input-box__label" for="value-{{this.value}}" tabindex="{{@index}}">
+                <span>{{this.value}} Questions</span>
+                <div class="best-score input-box__best-score">
+                  <h3 class="best-score__caption">Best Score</h3>
+                  <strong class="best-score__value">0</strong>
+                </div></label
+              >
+              <input
+                class="input-box__input visually-hidden"
+                type="radio"
+                name="questions"
+                value="{{this.value}}"
+                id="value-{{this.value}}"
+              />
+            </div>
+          {{/each}}
+        </div>
+      </fieldset>
+    `)
+
+    return template({ questions: this.stateSubject.getValue().questions })
   }
 }

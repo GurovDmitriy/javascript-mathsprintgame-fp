@@ -137,6 +137,18 @@ legend {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+}
+
+.header-game-box {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.header-game-box__inner {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 
   padding: 0 20px;
 }

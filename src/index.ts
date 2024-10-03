@@ -1,19 +1,15 @@
 import "reflect-metadata"
 
-import { container } from "./app/CompositionRoot/container"
-import { QuizPass } from "./feature/QuizPass"
-import { SelectQuestion } from "./feature/SelectQuestion"
-import { StartGame } from "./feature/StartGame"
+import { container } from "./app/compositionRoot/container"
+import { RootCreator } from "./core/framework/RenderRoot"
+import { GameBox } from "./feature/GameBox"
 
-// TODO: add testing
-// TODO: test handlerError custom and real exception
-// TODO: use render fn with html template
+const rootCreator = container.get<RootCreator>(RootCreator)
 
-const setQuestion = container.get<SelectQuestion>(SelectQuestion)
-setQuestion.init()
+const root = document.getElementById("root")
 
-const startGame = container.get<StartGame>(StartGame)
-startGame.init()
-
-const quizPass = container.get<QuizPass>(QuizPass)
-quizPass.init()
+if (root) {
+  rootCreator.render(root, () => container.get<GameBox>(GameBox))
+} else {
+  throw Error("Not found root element")
+}

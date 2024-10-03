@@ -1,6 +1,7 @@
 import { Observable } from "rxjs"
 
 export interface Game {
+  config: GameConfig
   state: Observable<GameState>
   choice(value: number): void
   play(): void
@@ -19,4 +20,9 @@ export interface GameState {
   active: boolean
   questionValue: number
   equations: GameEquations[]
+}
+
+export interface GameConfig {
+  penalty: number
+  questions: number[]
 }

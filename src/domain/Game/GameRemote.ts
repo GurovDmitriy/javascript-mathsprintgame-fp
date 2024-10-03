@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify"
-import { TYPES } from "../../app/CompositionRoot/types"
+import { TYPES } from "../../app/compositionRoot/types"
 import type { Game, Remote } from "../../interfaces"
 
 @injectable()

@@ -1,6 +1,6 @@
 export const TYPES = {
-  RootElement: Symbol.for("RootElement"),
   ErrorHandler: Symbol.for("ErrorHandler"),
   Game: Symbol.for("Game"),
+  GameConfig: Symbol.for("GameConfig"),
   Remote: Symbol.for("Remote"),
 }

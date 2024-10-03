@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify"
 import { BehaviorSubject } from "rxjs"
-import { TYPES } from "../../app/CompositionRoot/types"
-import { GameConfiguration } from "../../app/GameConfig"
+import { TYPES } from "../../app/compositionRoot/types"
 import type {
   ErrorHandler,
   Game,
+  GameConfig,
   GameEquations,
   GameState,
 } from "../../interfaces"
@@ -13,13 +13,12 @@ import type {
 export class GameMathSprint implements Game {
   private stateSubject
   private errorHandler
-  private readonly config: GameConfiguration
-
+  public readonly config: GameConfig
   public state
 
   constructor(
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
-    config: GameConfiguration,
+    @inject(TYPES.GameConfig) config: GameConfig,
   ) {
     this.stateSubject = new BehaviorSubject<GameState>({
       active: false,
