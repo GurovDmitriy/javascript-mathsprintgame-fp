@@ -10,10 +10,19 @@ import {
 } from "rxjs"
 import { ComponentStateful } from "../../interface/Component"
 
+interface Options<TState> {
+  stateInit: TState
+}
+
 @injectable()
 export abstract class ComponentBase<TProps = any, TState = any>
   implements ComponentStateful<TProps, TState>
 {
+  /**
+   * Init state for start state Observe
+   */
+  public readonly stateInit: TState
+
   /**
    * ID of the parent element for rendering.
    * When a Root or another component uses child components,
@@ -23,7 +32,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
   public readonly idParent: string
 
   /**
-   * ID Attribute helper as string data-painful-idparent.
+   * ID Attribute helper as string data-painful-idparent="value".
    */
   public readonly idParentAttr: string
 
@@ -40,7 +49,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
    * State is a trigger for re-rendering the component.
    * If you set the state, the component will re-render.
    */
-  protected readonly stateSubject
+  public readonly stateSubject
   public readonly state: Observable<TState>
 
   /**
@@ -48,16 +57,24 @@ export abstract class ComponentBase<TProps = any, TState = any>
    */
   public readonly unsubscribe = new Subject<void>()
 
-  constructor(initState: TState) {
+  constructor(options: Options<TState>) {
     this.idParent = this.idGenerator()
     this.idParentAttr = `data-painful-idparent="${this.idParent}"`
 
     this.props = {} as TProps
+    this.stateInit = options.stateInit
 
-    this.stateSubject = new BehaviorSubject<TState>(initState)
+    this.stateSubject = new BehaviorSubject<TState>(options.stateInit)
     this.state = this.stateSubject.asObservable()
 
     this.create()
+  }
+
+  /**
+   * Generate id for parent container.
+   */
+  private idGenerator(): string {
+    return crypto.randomUUID()
   }
 
   /**
@@ -76,8 +93,18 @@ export abstract class ComponentBase<TProps = any, TState = any>
    * and again when manually calling the create method.
    */
   create(): void {
+    this._renderTemplateOnCreateInstance()
+    this._renderTemplateAfterStateUpdated()
+  }
+
+  /**
+   * Append string html template in dom
+   * Work in component instance once and
+   * after your call create() method
+   */
+  private _renderTemplateOnCreateInstance() {
     queueMicrotask(() => {
-      this.init()
+      this.onInit()
     })
 
     queueMicrotask(() => {
@@ -90,12 +117,17 @@ export abstract class ComponentBase<TProps = any, TState = any>
 
         requestAnimationFrame(() => {
           if (elementParent) {
-            this.mounted()
+            this.onMounted()
           }
         })
       }
     })
+  }
 
+  /**
+   * Append string html template in dom after state changed
+   */
+  private _renderTemplateAfterStateUpdated() {
     /**
      * Core rerender with low level control.
      */
@@ -103,7 +135,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
       .pipe(
         takeUntil(this.unsubscribe),
         distinctUntilChanged((prev, curr) => Object.is(prev, curr)),
-        debounceTime(100),
+        debounceTime(80),
         tap(() => {
           requestAnimationFrame(() => {
             const elementParent = document.querySelector(
@@ -114,7 +146,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
               elementParent.innerHTML = this.render()
 
               requestAnimationFrame(() => {
-                this.updated()
+                this.onUpdated()
               })
             }
           })
@@ -122,27 +154,6 @@ export abstract class ComponentBase<TProps = any, TState = any>
       )
       .subscribe()
   }
-
-  /**
-   * Called during the initialization phase of the component.
-   * Invoked directly in the constructor of the component for the first time
-   * and again when manually calling the create method.
-   * Here, it is allowed to read local or global state to prepare
-   * data for rendering templates or perform other non-DOM related tasks.
-   */
-  init(): void {}
-
-  /**
-   * Called after init, after the template has been inserted into DOM.
-   * Here you can start working with state mutations and event delegation handlers.
-   */
-  mounted(): void {}
-
-  /**
-   * Called when the component triggers a re-render.
-   * This usually happens when the component's state changes.
-   */
-  updated(): void {}
 
   /**
    * Manual control for destroying the component.
@@ -156,19 +167,31 @@ export abstract class ComponentBase<TProps = any, TState = any>
   }
 
   /**
+   * Called during the initialization phase of the component.
+   * Invoked directly in the constructor of the component for the first time
+   * and again when manually calling the create method.
+   * Here, it is allowed to read local or global state to prepare
+   * data for rendering templates or perform other non-DOM related tasks.
+   */
+  onInit(): void {}
+
+  /**
+   * Called after init, after the template has been inserted into DOM.
+   * Here you can start working with state mutations and event delegation handlers.
+   */
+  onMounted(): void {}
+
+  /**
+   * Called when the component triggers a re-render.
+   * This usually happens when the component's state changes.
+   */
+  onUpdated(): void {}
+
+  /**
    * The framework uses this method to get HTML as a string.
    * Use Mustache or Handlebars to process your templates.
    * In this method, you can set props for child components or return
    * rendered output for child components if they are used in the current template.
    */
-  render(): string {
-    return ""
-  }
-
-  /**
-   * Generate id for parent container.
-   */
-  private idGenerator(): string {
-    return crypto.randomUUID()
-  }
+  abstract render(): string
 }

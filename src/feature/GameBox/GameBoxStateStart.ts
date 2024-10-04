@@ -15,10 +15,12 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext> {
     private startRound: Button,
     @inject(TYPES.Game) private game: Game,
   ) {
-    super({})
+    super({
+      stateInit: {},
+    })
   }
 
-  mounted() {
+  onMounted() {
     fromEvent(document, "click")
       .pipe(
         takeUntil(this.unsubscribe),

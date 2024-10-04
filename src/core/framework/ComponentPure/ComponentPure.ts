@@ -31,7 +31,5 @@ export abstract class ComponentPure<TProps = any>
    * In this method, you can set props for child components or return
    * rendered output for child components if they are used in the current template.
    */
-  render(): string {
-    return ""
-  }
+  abstract render(): string
 }

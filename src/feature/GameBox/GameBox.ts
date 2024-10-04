@@ -20,11 +20,13 @@ export class GameBox extends ComponentBase<any, State> {
     private stateCountdown: GameBoxStateCountdown,
   ) {
     super({
-      stateActive: stateStart,
-      timer: 3,
-      visibleStateStart: true,
-      visibleStateCountdown: false,
-      visibleStateQuiz: false,
+      stateInit: {
+        stateActive: stateStart,
+        timer: 3,
+        visibleStateStart: true,
+        visibleStateCountdown: false,
+        visibleStateQuiz: false,
+      },
     })
   }
 
@@ -62,7 +64,7 @@ export class GameBox extends ComponentBase<any, State> {
     this.stateCountdown.destroy()
   }
 
-  updated() {
+  onUpdated() {
     this.stateSubject.getValue().stateActive.create()
   }
 

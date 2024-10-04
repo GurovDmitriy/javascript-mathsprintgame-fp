@@ -4,15 +4,24 @@ import { take, takeUntil, tap, timer } from "rxjs"
 import { ComponentBase } from "../../core/framework/ComponentBase"
 import { GameBoxContext } from "./types"
 
+interface State {
+  timer: number
+}
+
 @injectable()
-export class GameBoxStateCountdown extends ComponentBase<GameBoxContext> {
+export class GameBoxStateCountdown extends ComponentBase<
+  GameBoxContext,
+  State
+> {
   constructor() {
     super({
-      timer: 3,
+      stateInit: {
+        timer: 3,
+      },
     })
   }
 
-  mounted() {
+  onMounted() {
     timer(0, 1000)
       .pipe(
         takeUntil(this.unsubscribe),

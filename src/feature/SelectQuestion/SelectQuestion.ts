@@ -26,11 +26,13 @@ export class SelectQuestion extends ComponentBase<any, State> {
     @inject(TYPES.Remote) private remote: Remote,
   ) {
     super({
-      questions: [{ classSelected: "", value: 0 }],
+      stateInit: {
+        questions: [{ classSelected: "", value: 0 }],
+      },
     })
   }
 
-  init() {
+  onInit() {
     this.game.state
       .pipe(
         takeUntil(this.unsubscribe),
@@ -54,7 +56,7 @@ export class SelectQuestion extends ComponentBase<any, State> {
       .subscribe()
   }
 
-  mounted() {
+  onMounted() {
     fromEvent(document, "click")
       .pipe(
         takeUntil(this.unsubscribe),
