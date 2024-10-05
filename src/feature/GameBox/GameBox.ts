@@ -1,6 +1,7 @@
 import { compile } from "handlebars"
 import { injectable } from "inversify"
-import { ComponentBase } from "../../core/framework/ComponentBase"
+import { BehaviorSubject, Subject } from "rxjs"
+import { ComponentBase } from "../../core/framework/Component"
 import { ComponentStateful } from "../../core/interface/Component"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
 import { GameBoxStateStart } from "./GameBoxStateStart"
@@ -15,19 +16,43 @@ interface State {
 
 @injectable()
 export class GameBox extends ComponentBase<any, State> {
+  public unsubscribe = new Subject<void>()
+  public stateSubject
+  public state
+  public children
+
   constructor(
     private stateStart: GameBoxStateStart,
     private stateCountdown: GameBoxStateCountdown,
   ) {
-    super({
-      stateInit: {
-        stateActive: stateStart,
-        timer: 3,
-        visibleStateStart: true,
-        visibleStateCountdown: false,
-        visibleStateQuiz: false,
-      },
+    super()
+
+    this.children = [this.stateStart, this.stateCountdown]
+
+    this.stateSubject = new BehaviorSubject<State>({
+      stateActive: stateStart,
+      timer: 3,
+      visibleStateStart: true,
+      visibleStateCountdown: false,
+      visibleStateQuiz: false,
     })
+
+    this.state = this.stateSubject.asObservable()
+  }
+
+  onInit() {
+    const context = {
+      timer: this.stateSubject.getValue().timer,
+      setStateSplash: this.setStateSplash.bind(this),
+      setStateCountdown: this.setStateCountdown.bind(this),
+    }
+
+    this.stateStart.setProps(context)
+    this.stateCountdown.setProps(context)
+  }
+
+  onUpdated() {
+    this.stateSubject.getValue().stateActive.create()
   }
 
   setStateSplash() {
@@ -64,30 +89,15 @@ export class GameBox extends ComponentBase<any, State> {
     this.stateCountdown.destroy()
   }
 
-  onUpdated() {
-    this.stateSubject.getValue().stateActive.create()
-  }
-
   render() {
-    const context = {
-      timer: this.stateSubject.getValue().timer,
-      setStateSplash: this.setStateSplash.bind(this),
-      setStateCountdown: this.setStateCountdown.bind(this),
-    }
-
-    this.stateStart.setProps(context)
-    this.stateCountdown.setProps(context)
-
     const template = compile(`
       <div class="header-game-box">
         {{#if state.visibleStateStart}}
         <div class="header-game-box__inner" {{{idParentAttrStateStart}}}>
-          {{{componentActive}}}
         </div>
         {{/if}}
         {{#if state.visibleStateCountdown}}
         <div class="header-game-box__inner" {{{idParentAttrStateCountdown}}}>
-          {{{componentActive}}}
         </div>
         {{/if}}
       </div>
@@ -97,7 +107,6 @@ export class GameBox extends ComponentBase<any, State> {
       idParentAttrStateStart: this.stateStart.idParentAttr,
       idParentAttrStateCountdown: this.stateCountdown.idParentAttr,
       state: this.stateSubject.getValue(),
-      componentActive: this.stateSubject.getValue().stateActive.render(),
     })
   }
 }

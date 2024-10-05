@@ -1,14 +1,17 @@
 import { injectable } from "inversify"
-import { Component } from "../../interface/Component"
+import { ComponentStateful } from "../../interface/Component"
 import { RootRender } from "../../interface/RootRender"
 
 @injectable()
 export class RootCreator implements RootRender {
-  render(root: Element, componentRoot: () => Component) {
-    queueMicrotask(() => {
+  render(root: Element, componentRoot: () => ComponentStateful) {
+    requestAnimationFrame(() => {
       const component = componentRoot()
       root.setAttribute("data-painful-idparent", component.idParent)
-      root.innerHTML = component.render()
+
+      requestAnimationFrame(() => {
+        component.create()
+      })
     })
   }
 }

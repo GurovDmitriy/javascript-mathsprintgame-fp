@@ -1,23 +1,24 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 
-export interface Component<TProps = any> {
-  setProps(props: TProps): void
-  render(): string
-}
-
-export interface ComponentStateful<TProps = any, TState = any>
-  extends Component<TProps> {
+export interface ComponentStateful<TProps = any, TState = any> {
   idParent: string
   idParentAttr: string
-  stateSubject: BehaviorSubject<TState>
-  stateInit: TState
-  state: Observable<TState>
   unsubscribe: Subject<void>
+  stateSubject: BehaviorSubject<TState>
+  state: Observable<TState>
+  children?: ComponentStateful[]
+  setProps(props: TProps): void
   create(): void
   destroy(): void
+  onCreate?(): void
   onInit?(): void
   onMounted?(): void
   onUpdated?(): void
+  onDestroy?(): void
+  render(): string
 }
 
-export interface ComponentStateless<TProps> extends Component<TProps> {}
+export interface ComponentStateless<TProps> {
+  setProps(props: TProps): void
+  render(): string
+}

@@ -1,17 +1,19 @@
 import { compile } from "handlebars"
 import { inject, injectable } from "inversify"
 import {
+  BehaviorSubject,
   catchError,
   distinctUntilChanged,
   filter,
   fromEvent,
   map,
   of,
+  Subject,
   takeUntil,
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/ComponentBase"
+import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 
 interface State {
@@ -20,16 +22,22 @@ interface State {
 
 @injectable()
 export class SelectQuestion extends ComponentBase<any, State> {
+  public unsubscribe = new Subject<void>()
+  public stateSubject
+  public state
+
   constructor(
     @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
     @inject(TYPES.Game) private game: Game,
     @inject(TYPES.Remote) private remote: Remote,
   ) {
-    super({
-      stateInit: {
-        questions: [{ classSelected: "", value: 0 }],
-      },
+    super()
+
+    this.stateSubject = new BehaviorSubject<State>({
+      questions: [],
     })
+
+    this.state = this.stateSubject.asObservable()
   }
 
   onInit() {

@@ -1,6 +1,6 @@
 import { compile } from "handlebars"
 import { injectable } from "inversify"
-import { ComponentPure } from "../../../core/framework/ComponentPure"
+import { ComponentPure } from "../../../core/framework/Component"
 
 interface Props {
   content: string

@@ -1,7 +1,7 @@
 import { compile } from "handlebars"
 import { injectable } from "inversify"
-import { take, takeUntil, tap, timer } from "rxjs"
-import { ComponentBase } from "../../core/framework/ComponentBase"
+import { BehaviorSubject, Subject, take, takeUntil, tap, timer } from "rxjs"
+import { ComponentBase } from "../../core/framework/Component"
 import { GameBoxContext } from "./types"
 
 interface State {
@@ -13,12 +13,18 @@ export class GameBoxStateCountdown extends ComponentBase<
   GameBoxContext,
   State
 > {
+  public unsubscribe = new Subject<void>()
+  public stateSubject
+  public state
+
   constructor() {
-    super({
-      stateInit: {
-        timer: 3,
-      },
+    super()
+
+    this.stateSubject = new BehaviorSubject<State>({
+      timer: 3,
     })
+
+    this.state = this.stateSubject.asObservable()
   }
 
   onMounted() {
