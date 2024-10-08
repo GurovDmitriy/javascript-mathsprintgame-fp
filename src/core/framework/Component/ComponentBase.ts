@@ -1,3 +1,4 @@
+import Immutable from "immutable"
 import {
   BehaviorSubject,
   debounceTime,
@@ -7,10 +8,13 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { ComponentStateful } from "../../interface/Component"
+import { Children, ComponentStateful } from "../../interface/Component"
 
-export abstract class ComponentBase<TProps = any, TState = any>
-  implements ComponentStateful<TProps, TState>
+export abstract class ComponentBase<
+  TProps = any,
+  TState = any,
+  TChildren extends string = any,
+> implements ComponentStateful<TProps, TState, TChildren>
 {
   public readonly idParent: string
   public readonly idParentAttr: string
@@ -20,7 +24,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
   abstract unsubscribe: Subject<void>
   abstract stateSubject: BehaviorSubject<TState>
   abstract state: Observable<TState>
-  public children: ComponentStateful[] = []
+  public children: Children<TChildren> = {} as Children<TChildren>
 
   constructor() {
     this.idParent = this._idGenerator()
@@ -32,6 +36,8 @@ export abstract class ComponentBase<TProps = any, TState = any>
   }
 
   create(): void {
+    this.destroy()
+
     queueMicrotask(() => {
       this._init()
     })
@@ -48,6 +54,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
     queueMicrotask(() => {
       this.unsubscribe.next()
       this.unsubscribe.complete()
+      this.unsubscribe = new Subject<void>()
 
       if (typeof this.onDestroy === "function") {
         requestAnimationFrame(() => {
@@ -88,7 +95,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
       this.state
         .pipe(
           takeUntil(this.unsubscribe),
-          distinctUntilChanged((prev, curr) => Object.is(prev, curr)),
+          distinctUntilChanged((prev, curr) => Immutable.is(prev, curr)),
           debounceTime(80),
           tap(() => {
             queueMicrotask(() => {
@@ -110,8 +117,11 @@ export abstract class ComponentBase<TProps = any, TState = any>
   }
 
   private _init() {
-    if (this.children.length) {
-      this.children.forEach((c) => c.create())
+    if (this.children && Object.values(this.children).length) {
+      Object.values(this.children).forEach((c) => {
+        const child = c as { value: string; component: ComponentStateful }
+        child.component.create()
+      })
     }
 
     if (typeof this.onInit === "function") {

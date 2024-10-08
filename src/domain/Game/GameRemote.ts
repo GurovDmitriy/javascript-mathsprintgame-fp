@@ -2,6 +2,10 @@ import { inject, injectable } from "inversify"
 import { TYPES } from "../../app/compositionRoot/types"
 import type { Game, Remote } from "../../interfaces"
 
+/**
+ * GameMathSprint - abstraction
+ * Powered by Bridge design pattern
+ */
 @injectable()
 export class GameRemote implements Remote {
   public game: Game
@@ -19,10 +23,10 @@ export class GameRemote implements Remote {
   }
 
   buttonA() {
-    this.game.controlA()
+    this.game.markWrong()
   }
 
   buttonB() {
-    this.game.controlB()
+    this.game.markRight()
   }
 }

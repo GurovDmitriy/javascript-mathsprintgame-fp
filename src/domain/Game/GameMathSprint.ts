@@ -1,4 +1,6 @@
+import { List } from "immutable"
 import { inject, injectable } from "inversify"
+import * as R from "ramda"
 import { BehaviorSubject } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import type {
@@ -9,6 +11,10 @@ import type {
   GameState,
 } from "../../interfaces"
 
+/**
+ * GameMathSprint - realization
+ * Powered by Bridge design pattern
+ */
 @injectable()
 export class GameMathSprint implements Game {
   private stateSubject
@@ -23,7 +29,7 @@ export class GameMathSprint implements Game {
     this.stateSubject = new BehaviorSubject<GameState>({
       active: false,
       questionValue: 0,
-      equations: [],
+      equations: List(),
     })
     this.state = this.stateSubject.asObservable()
 
@@ -42,7 +48,7 @@ export class GameMathSprint implements Game {
     this.stateSubject.next({
       ...this.stateSubject.getValue(),
       questionValue: value,
-      equations: [this.getRightEquations()],
+      equations: this.getEquations(value),
     })
   }
 
@@ -58,22 +64,45 @@ export class GameMathSprint implements Game {
     })
   }
 
-  controlA() {}
-  controlB() {}
+  markRight() {}
+  markWrong() {}
 
-  private getRightEquations() {
-    const firstNumber = this.getRandom(0, 9)
-    const secondNumber = this.getRandom(0, 9)
-    const equationValue = firstNumber * secondNumber
-    return {
-      values: [firstNumber, secondNumber],
-      type: "multiply",
-      result: equationValue,
-      evaluated: true,
-    } satisfies GameEquations
+  private getEquations(count: number): List<GameEquations> {
+    return R.pipe(
+      () => this._getRandomNumber(1, count),
+      (rightCount) =>
+        R.concat(
+          R.repeat(this._getEquationRight(), rightCount),
+          R.repeat(this._getEquationsWrong(), count - rightCount),
+        ),
+      (arr) => List(arr),
+    )()
   }
 
-  private getRandom(min = 0, max = 5) {
+  private _getEquationRight(): GameEquations {
+    const leftNumber = this._getRandomNumber(0, 9)
+    const rightNumber = this._getRandomNumber(0, 9)
+    const result = leftNumber * rightNumber
+    return {
+      values: [leftNumber, rightNumber],
+      type: "multiply",
+      result,
+    }
+  }
+
+  private _getEquationsWrong(): GameEquations {
+    const leftNumber = this._getRandomNumber(0, 9)
+    const rightNumber = this._getRandomNumber(0, 9)
+    const result = leftNumber * rightNumber + this._getRandomNumber(1, 9)
+
+    return {
+      values: [leftNumber, rightNumber],
+      type: "multiply",
+      result,
+    }
+  }
+
+  private _getRandomNumber(min: number, max: number): number {
     const rand = min - 0.5 + Math.random() * (max - min + 1)
     return Math.round(rand)
   }

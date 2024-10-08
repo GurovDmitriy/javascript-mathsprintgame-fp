@@ -1,4 +1,5 @@
+export type ComponentNames = "start" | "countdown" | "quiz"
+
 export interface GameBoxContext {
-  setStateSplash: () => void
-  setStateCountdown: () => void
+  setState: (name: ComponentNames) => void
 }

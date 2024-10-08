@@ -1,6 +1,15 @@
 import { compile } from "handlebars"
+import { fromJS, FromJS } from "immutable"
 import { injectable } from "inversify"
-import { BehaviorSubject, Subject, take, takeUntil, tap, timer } from "rxjs"
+import {
+  BehaviorSubject,
+  finalize,
+  Subject,
+  take,
+  takeUntil,
+  tap,
+  timer,
+} from "rxjs"
 import { ComponentBase } from "../../core/framework/Component"
 import { GameBoxContext } from "./types"
 
@@ -8,10 +17,12 @@ interface State {
   timer: number
 }
 
+type StateImm = FromJS<State>
+
 @injectable()
 export class GameBoxStateCountdown extends ComponentBase<
   GameBoxContext,
-  State
+  StateImm
 > {
   public unsubscribe = new Subject<void>()
   public stateSubject
@@ -20,11 +31,17 @@ export class GameBoxStateCountdown extends ComponentBase<
   constructor() {
     super()
 
-    this.stateSubject = new BehaviorSubject<State>({
-      timer: 3,
-    })
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        timer: 3,
+      }),
+    )
 
     this.state = this.stateSubject.asObservable()
+  }
+
+  getState() {
+    return this.stateSubject.getValue()
   }
 
   onMounted() {
@@ -33,10 +50,12 @@ export class GameBoxStateCountdown extends ComponentBase<
         takeUntil(this.unsubscribe),
         take(4),
         tap((count: number) => {
-          this.stateSubject.next({
-            ...this.stateSubject.getValue(),
-            timer: 3 - count,
-          })
+          this.stateSubject.next(
+            this.stateSubject.getValue().set("timer", 3 - count),
+          )
+        }),
+        finalize(() => {
+          this.props.setState("quiz")
         }),
       )
       .subscribe()
@@ -62,7 +81,7 @@ export class GameBoxStateCountdown extends ComponentBase<
               >
                 <legend class="fieldset__legend">Countdown</legend>
                 <div class="countdown fieldset__countdown">
-                  <h3 class="countdown__caption">{{timer}}</h3>
+                  <h3 class="countdown__caption">{{state.timer}}</h3>
                   <div class="contdown__control-table-box">
                     <table class="control-table coutdown__control-table">
                       <tr>
@@ -150,6 +169,6 @@ export class GameBoxStateCountdown extends ComponentBase<
       </header>
     `)
 
-    return template({ timer: this.stateSubject.getValue().timer })
+    return template({ state: this.stateSubject.getValue().toJS() })
   }
 }

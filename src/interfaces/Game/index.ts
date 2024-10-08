@@ -1,3 +1,4 @@
+import { List } from "immutable"
 import { Observable } from "rxjs"
 
 export interface Game {
@@ -5,21 +6,20 @@ export interface Game {
   state: Observable<GameState>
   choice(value: number): void
   play(): void
-  controlA(): void
-  controlB(): void
+  markRight(): void
+  markWrong(): void
 }
 
 export interface GameEquations {
   values: number[]
   type: "multiply" | "division"
   result: number
-  evaluated: boolean
 }
 
 export interface GameState {
   active: boolean
   questionValue: number
-  equations: GameEquations[]
+  equations: List<GameEquations>
 }
 
 export interface GameConfig {

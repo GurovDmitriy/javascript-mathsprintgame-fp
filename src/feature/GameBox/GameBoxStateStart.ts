@@ -1,4 +1,5 @@
 import { compile } from "handlebars"
+import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
@@ -16,8 +17,12 @@ import { Button } from "../../shared/components/Button"
 import { SelectQuestion } from "../SelectQuestion"
 import { GameBoxContext } from "./types"
 
+interface State {}
+
+type StateImm = FromJS<State>
+
 @injectable()
-export class GameBoxStateStart extends ComponentBase<GameBoxContext> {
+export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   public unsubscribe = new Subject<void>()
   public stateSubject
   public state
@@ -30,9 +35,14 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext> {
   ) {
     super()
 
-    this.children = [this.selectQuestion]
+    this.children = {
+      selectQuestion: {
+        value: "selectQuestion",
+        component: this.selectQuestion,
+      },
+    }
 
-    this.stateSubject = new BehaviorSubject<{}>({})
+    this.stateSubject = new BehaviorSubject<StateImm>(fromJS({}))
 
     this.state = this.stateSubject.asObservable()
   }
@@ -57,7 +67,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext> {
           return state[1].questionValue > 0
         }),
         tap(() => {
-          this.props.setStateCountdown()
+          this.props.setState("countdown")
         }),
       )
       .subscribe()

@@ -1,103 +1,114 @@
 import { compile } from "handlebars"
+import { fromJS, FromJS } from "immutable"
 import { injectable } from "inversify"
 import { BehaviorSubject, Subject } from "rxjs"
 import { ComponentBase } from "../../core/framework/Component"
-import { ComponentStateful } from "../../core/interface/Component"
+import { Children } from "../../core/interface/Component"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
+import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
 import { GameBoxStateStart } from "./GameBoxStateStart"
+import { ComponentNames, GameBoxContext } from "./types"
 
 interface State {
-  stateActive: ComponentStateful
-  timer: number
-  visibleStateStart: boolean
-  visibleStateCountdown: boolean
-  visibleStateQuiz: boolean
+  active: ComponentNames
+  start: boolean
+  countdown: boolean
+  quiz: boolean
 }
 
+type StateImm = FromJS<State>
+
 @injectable()
-export class GameBox extends ComponentBase<any, State> {
+export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
   public unsubscribe = new Subject<void>()
   public stateSubject
   public state
-  public children
+  public children: Children<ComponentNames>
 
   constructor(
     private stateStart: GameBoxStateStart,
     private stateCountdown: GameBoxStateCountdown,
+    private stateQuiz: GameBoxStateQuiz,
   ) {
     super()
 
-    this.children = [this.stateStart, this.stateCountdown]
+    this.children = {
+      start: {
+        value: "start",
+        component: this.stateStart,
+      },
+      countdown: {
+        value: "countdown",
+        component: this.stateCountdown,
+      },
+      quiz: {
+        value: "quiz",
+        component: this.stateQuiz,
+      },
+    }
 
-    this.stateSubject = new BehaviorSubject<State>({
-      stateActive: stateStart,
-      timer: 3,
-      visibleStateStart: true,
-      visibleStateCountdown: false,
-      visibleStateQuiz: false,
-    })
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        active: "start",
+        start: true,
+        countdown: false,
+        quiz: false,
+      } satisfies State),
+    )
 
     this.state = this.stateSubject.asObservable()
   }
 
   onInit() {
-    const context = {
-      timer: this.stateSubject.getValue().timer,
-      setStateSplash: this.setStateSplash.bind(this),
-      setStateCountdown: this.setStateCountdown.bind(this),
+    const context: GameBoxContext = {
+      setState: this.setState.bind(this),
     }
 
-    this.stateStart.setProps(context)
-    this.stateCountdown.setProps(context)
+    Object.values(this.children).forEach((c) => c.component.setProps(context))
   }
 
   onUpdated() {
-    this.stateSubject.getValue().stateActive.create()
+    const active = this.stateSubject.getValue().get("active") as
+      | ComponentNames
+      | undefined
+
+    if (active) {
+      this.children[active].component.create()
+
+      for (const [name, value] of Object.entries(this.children)) {
+        if (name !== active) {
+          value.component.destroy()
+        }
+      }
+    }
   }
 
-  setStateSplash() {
-    this.stateSubject.next({
-      ...this.stateSubject.getValue(),
-      stateActive: this.stateStart,
-      visibleStateStart: true,
-      visibleStateCountdown: false,
-      visibleStateQuiz: false,
-    })
-  }
-
-  setStateCountdown() {
-    this.stateSubject.next({
-      ...this.stateSubject.getValue(),
-      stateActive: this.stateCountdown,
-      visibleStateStart: false,
-      visibleStateCountdown: true,
-      visibleStateQuiz: false,
-    })
-
-    this.stateStart.destroy()
-  }
-
-  setQuizState() {
-    this.stateSubject.next({
-      ...this.stateSubject.getValue(),
-      stateActive: this.stateStart,
-      visibleStateStart: false,
-      visibleStateCountdown: false,
-      visibleStateQuiz: true,
-    })
-
-    this.stateCountdown.destroy()
+  setState(name: ComponentNames) {
+    this.stateSubject.next(
+      this.stateSubject.getValue().merge(
+        fromJS({
+          active: name,
+          start: name === "start",
+          countdown: name === "countdown",
+          quiz: name === "quiz",
+        }),
+      ),
+    )
   }
 
   render() {
     const template = compile(`
       <div class="header-game-box">
-        {{#if state.visibleStateStart}}
+        {{#if state.start}}
         <div class="header-game-box__inner" {{{idParentAttrStateStart}}}>
         </div>
         {{/if}}
-        {{#if state.visibleStateCountdown}}
+        {{#if state.countdown}}
         <div class="header-game-box__inner" {{{idParentAttrStateCountdown}}}>
+        </div>
+        {{/if}}
+        {{#if state.quiz}}
+        <div class="header-game-box__inner" {{{idParentAttrStateQuiz}}}>
         </div>
         {{/if}}
       </div>
@@ -106,7 +117,8 @@ export class GameBox extends ComponentBase<any, State> {
     return template({
       idParentAttrStateStart: this.stateStart.idParentAttr,
       idParentAttrStateCountdown: this.stateCountdown.idParentAttr,
-      state: this.stateSubject.getValue(),
+      idParentAttrStateQuiz: this.stateQuiz.idParentAttr,
+      state: this.stateSubject.getValue().toJS(),
     })
   }
 }

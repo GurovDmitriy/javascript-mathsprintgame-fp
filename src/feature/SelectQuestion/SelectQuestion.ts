@@ -1,4 +1,5 @@
 import { compile } from "handlebars"
+import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
@@ -20,8 +21,10 @@ interface State {
   questions: { classSelected: string; value: number }[]
 }
 
+type StateImm = FromJS<State>
+
 @injectable()
-export class SelectQuestion extends ComponentBase<any, State> {
+export class SelectQuestion extends ComponentBase<any, StateImm> {
   public unsubscribe = new Subject<void>()
   public stateSubject
   public state
@@ -33,9 +36,11 @@ export class SelectQuestion extends ComponentBase<any, State> {
   ) {
     super()
 
-    this.stateSubject = new BehaviorSubject<State>({
-      questions: [],
-    })
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        questions: [],
+      }),
+    )
 
     this.state = this.stateSubject.asObservable()
   }
@@ -49,16 +54,17 @@ export class SelectQuestion extends ComponentBase<any, State> {
             previous.questionValue === current.questionValue,
         ),
         tap((state) => {
-          this.stateSubject.next({
-            ...this.stateSubject.getValue(),
-            questions: this.game.config.questions.map((q) => {
-              return {
-                classSelected:
-                  state.questionValue === q ? "input-box--active" : "",
-                value: q,
-              }
-            }),
+          const questions = this.game.config.questions.map((q) => {
+            return {
+              classSelected:
+                state.questionValue === q ? "input-box--active" : "",
+              value: q,
+            }
           })
+
+          this.stateSubject.next(
+            this.stateSubject.getValue().set("questions", fromJS(questions)),
+          )
         }),
       )
       .subscribe()
@@ -90,7 +96,7 @@ export class SelectQuestion extends ComponentBase<any, State> {
       <fieldset class="fieldset form__fieldset" id="splash-page">
         <legend class="fieldset__legend">Questions</legend>
         <div class="questions fieldset__questions">
-          {{#each questions}}
+          {{#each state.questions}}
             <div class="input-box questions__input-box {{this.classSelected}}" data-question="{{this.value}}">
               <label class="input-box__label" for="value-{{this.value}}" tabindex="{{@index}}">
                 <span>{{this.value}} Questions</span>
@@ -112,6 +118,6 @@ export class SelectQuestion extends ComponentBase<any, State> {
       </fieldset>
     `)
 
-    return template({ questions: this.stateSubject.getValue().questions })
+    return template({ state: this.stateSubject.getValue().toJS() })
   }
 }
