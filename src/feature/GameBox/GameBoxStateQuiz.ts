@@ -1,7 +1,7 @@
 import { compile } from "handlebars"
 import { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
-import { BehaviorSubject, pipe, Subject, tap } from "rxjs"
+import { BehaviorSubject, Subject, takeUntil, tap } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { Game } from "../../interfaces"
@@ -32,13 +32,14 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateMap> {
   }
 
   onInit() {
-    this.game.state.pipe(
-      pipe(
+    this.game.state
+      .pipe(
+        takeUntil(this.unsubscribe),
         tap((data) => {
           console.log(data)
         }),
-      ),
-    )
+      )
+      .subscribe()
   }
 
   onMounted() {}
