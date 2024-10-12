@@ -1,6 +1,6 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
-import { injectable } from "inversify"
+import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
   finalize,
@@ -10,7 +10,9 @@ import {
   tap,
   timer,
 } from "rxjs"
+import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
+import type { Remote } from "../../interfaces"
 import { GameBoxContext } from "./types"
 
 interface State {
@@ -28,7 +30,7 @@ export class GameBoxStateCountdown extends ComponentBase<
   public stateSubject
   public state
 
-  constructor() {
+  constructor(@inject(TYPES.Remote) private remote: Remote) {
     super()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
@@ -56,6 +58,7 @@ export class GameBoxStateCountdown extends ComponentBase<
         }),
         finalize(() => {
           this.props.setState("quiz")
+          this.remote.start()
         }),
       )
       .subscribe()

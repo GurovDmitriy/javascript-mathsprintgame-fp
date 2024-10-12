@@ -51,13 +51,13 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
         takeUntil(this.unsubscribe),
         distinctUntilChanged(
           (previous, current) =>
-            previous.questionValue === current.questionValue,
+            previous.get("questionValue") === current.get("questionValue"),
         ),
         tap((state) => {
           const questions = this.game.config.questions.map((q) => {
             return {
               classSelected:
-                state.questionValue === q ? "input-box--active" : "",
+                state.get("questionValue") === q ? "input-box--active" : "",
               value: q,
             }
           })

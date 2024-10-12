@@ -157,6 +157,7 @@ legend {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  height: 200px;
 
   overflow-y: scroll;
 
@@ -372,14 +373,10 @@ legend {
 }
 
 .btn-quiz-box {
-  display: none;
+  display: flex;
   justify-content: space-evenly;
 
   width: 100%;
-}
-
-.btn-quiz-box--active {
-  display: flex;
 }
 
 .countdown {

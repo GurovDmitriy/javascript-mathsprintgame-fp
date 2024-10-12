@@ -6,6 +6,7 @@ import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
 import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
+import { GameBoxStateScore } from "./GameBoxStateScore"
 import { GameBoxStateStart } from "./GameBoxStateStart"
 import { ComponentNames, GameBoxContext } from "./types"
 
@@ -14,6 +15,7 @@ interface State {
   start: boolean
   countdown: boolean
   quiz: boolean
+  score: boolean
 }
 
 type StateImm = FromJS<State>
@@ -29,6 +31,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
     private stateStart: GameBoxStateStart,
     private stateCountdown: GameBoxStateCountdown,
     private stateQuiz: GameBoxStateQuiz,
+    private stateScore: GameBoxStateScore,
   ) {
     super()
 
@@ -45,6 +48,10 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         value: "quiz",
         component: this.stateQuiz,
       },
+      score: {
+        value: "score",
+        component: this.stateScore,
+      },
     }
 
     this.stateSubject = new BehaviorSubject<StateImm>(
@@ -53,6 +60,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         start: true,
         countdown: false,
         quiz: false,
+        score: false,
       } satisfies State),
     )
 
@@ -91,6 +99,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
           start: name === "start",
           countdown: name === "countdown",
           quiz: name === "quiz",
+          score: name === "score",
         }),
       ),
     )
@@ -111,6 +120,10 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         <div class="header-game-box__inner" {{{idParentAttrStateQuiz}}}>
         </div>
         {{/if}}
+        {{#if state.score}}
+        <div class="header-game-box__inner" {{{idParentAttrStateScore}}}>
+        </div>
+        {{/if}}
       </div>
     `)
 
@@ -118,6 +131,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
       idParentAttrStateStart: this.stateStart.idParentAttr,
       idParentAttrStateCountdown: this.stateCountdown.idParentAttr,
       idParentAttrStateQuiz: this.stateQuiz.idParentAttr,
+      idParentAttrStateScore: this.stateScore.idParentAttr,
       state: this.stateSubject.getValue().toJS(),
     })
   }

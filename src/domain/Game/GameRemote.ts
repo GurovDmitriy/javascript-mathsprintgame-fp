@@ -3,30 +3,34 @@ import { TYPES } from "../../app/compositionRoot/types"
 import type { Game, Remote } from "../../interfaces"
 
 /**
- * GameMathSprint - abstraction
+ * GameRemote - abstraction
  * Powered by Bridge design pattern
  */
 @injectable()
 export class GameRemote implements Remote {
-  public game: Game
+  private _game: Game
 
   constructor(@inject(TYPES.Game) game: Game) {
-    this.game = game
+    this._game = game
   }
 
   choice(value: number) {
-    this.game.choice(value)
+    this._game.choice(value)
   }
 
   start() {
-    this.game.play()
+    this._game.play()
   }
 
-  buttonA() {
-    this.game.markWrong()
+  replay() {
+    this._game.reset()
   }
 
-  buttonB() {
-    this.game.markRight()
+  wrong() {
+    this._game.markWrong()
+  }
+
+  right() {
+    this._game.markRight()
   }
 }

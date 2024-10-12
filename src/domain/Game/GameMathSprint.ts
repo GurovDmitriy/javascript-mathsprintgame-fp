@@ -1,4 +1,4 @@
-import { List } from "immutable"
+import { fromJS, FromJS, List } from "immutable"
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
 import { BehaviorSubject } from "rxjs"
@@ -7,9 +7,11 @@ import type {
   ErrorHandler,
   Game,
   GameConfig,
-  GameEquations,
+  GameEquation,
   GameState,
 } from "../../interfaces"
+
+type GameStateImm = FromJS<GameState>
 
 /**
  * GameMathSprint - realization
@@ -26,11 +28,16 @@ export class GameMathSprint implements Game {
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
     @inject(TYPES.GameConfig) config: GameConfig,
   ) {
-    this.stateSubject = new BehaviorSubject<GameState>({
-      active: false,
-      questionValue: 0,
-      equations: List(),
-    })
+    this.stateSubject = new BehaviorSubject<GameStateImm>(
+      fromJS({
+        active: false,
+        end: false,
+        questionValue: 0,
+        equationActive: 0,
+        equations: [],
+        score: null,
+      }),
+    )
     this.state = this.stateSubject.asObservable()
 
     this.errorHandler = errorHandler
@@ -45,41 +52,100 @@ export class GameMathSprint implements Game {
   }
 
   choice(value: number) {
-    this.stateSubject.next({
-      ...this.stateSubject.getValue(),
-      questionValue: value,
-      equations: this.getEquations(value),
-    })
+    this.stateSubject.next(
+      this.stateSubject
+        .getValue()
+        .set("questionValue", value)
+        .set("equations", fromJS(this._getEquations(value))),
+    )
   }
 
   play() {
-    if (this.stateSubject.getValue().questionValue <= 0) {
+    const value = this.stateSubject.getValue().get("questionValue") as number
+    if (value && value <= 0) {
       this.errorHandler.handle(Error("Question value not select"))
       return
     }
 
-    this.stateSubject.next({
-      ...this.stateSubject.getValue(),
-      active: true,
-    })
+    this.stateSubject.next(this.stateSubject.getValue().set("active", true))
   }
 
-  markRight() {}
-  markWrong() {}
+  reset() {
+    this.stateSubject.next(
+      this.stateSubject.getValue().merge(
+        fromJS({
+          active: false,
+          end: false,
+          questionValue: 0,
+          equationActive: 0,
+          equations: [],
+          score: null,
+        }),
+      ),
+    )
+  }
 
-  private getEquations(count: number): List<GameEquations> {
+  markRight() {
+    const active = this.stateSubject.getValue().get("equationActive") as number
+    const equations = this.stateSubject.getValue().get("equations") as List<any>
+
+    if (active > equations.size - 1) {
+      this.stateSubject.next(this.stateSubject.getValue().set("end", true))
+      return
+    }
+
+    this.stateSubject.next(
+      this.stateSubject
+        .getValue()
+        .set(
+          "equationActive",
+          (this.stateSubject.getValue().get("equationActive") as number) + 1,
+        )
+        .updateIn(["equations", active], (item) => item.set("answer", true)),
+    )
+
+    console.log(this.stateSubject.getValue().toJS())
+  }
+
+  markWrong() {
+    const active = this.stateSubject.getValue().get("equationActive") as number
+    const equations = this.stateSubject.getValue().get("equations") as List<any>
+
+    if (active > equations.size - 1) {
+      this.stateSubject.next(this.stateSubject.getValue().set("end", true))
+      return
+    }
+
+    this.stateSubject.next(
+      this.stateSubject
+        .getValue()
+        .set(
+          "equationActive",
+          (this.stateSubject.getValue().get("equationActive") as number) + 1,
+        )
+        .updateIn(["equations", active], (item) => item.set("answer", false)),
+    )
+
+    console.log(this.stateSubject.getValue().toJS())
+  }
+
+  private _getEquations(count: number): GameEquation[] {
     return R.pipe(
       () => this._getRandomNumber(1, count),
       (rightCount) =>
         R.concat(
-          R.repeat(this._getEquationRight(), rightCount),
-          R.repeat(this._getEquationsWrong(), count - rightCount),
+          Array.from({ length: count }, this._getEquationRight, this),
+          Array.from(
+            { length: count - rightCount },
+            this._getEquationsWrong,
+            this,
+          ),
         ),
-      (arr) => List(arr),
+      (arr) => arr,
     )()
   }
 
-  private _getEquationRight(): GameEquations {
+  private _getEquationRight(): GameEquation {
     const leftNumber = this._getRandomNumber(0, 9)
     const rightNumber = this._getRandomNumber(0, 9)
     const result = leftNumber * rightNumber
@@ -87,10 +153,11 @@ export class GameMathSprint implements Game {
       values: [leftNumber, rightNumber],
       type: "multiply",
       result,
+      answer: null,
     }
   }
 
-  private _getEquationsWrong(): GameEquations {
+  private _getEquationsWrong(): GameEquation {
     const leftNumber = this._getRandomNumber(0, 9)
     const rightNumber = this._getRandomNumber(0, 9)
     const result = leftNumber * rightNumber + this._getRandomNumber(1, 9)
@@ -99,6 +166,7 @@ export class GameMathSprint implements Game {
       values: [leftNumber, rightNumber],
       type: "multiply",
       result,
+      answer: null,
     }
   }
 

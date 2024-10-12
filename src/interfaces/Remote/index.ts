@@ -1,6 +1,7 @@
 export interface Remote {
   choice(value: number): void
   start(): void
-  buttonA(): void
-  buttonB(): void
+  replay(): void
+  wrong(): void
+  right(): void
 }

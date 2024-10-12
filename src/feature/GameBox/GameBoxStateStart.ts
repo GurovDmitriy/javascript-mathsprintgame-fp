@@ -64,7 +64,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
         }),
         withLatestFrom(this.game.state),
         filter((state) => {
-          return state[1].questionValue > 0
+          return (state[1].get("questionValue") as number) > 0
         }),
         tap(() => {
           this.props.setState("countdown")
