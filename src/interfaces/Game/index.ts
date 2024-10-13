@@ -24,10 +24,19 @@ export interface GameState {
   questionValue: number
   equationActive: number
   equations: GameEquation[]
-  score: any
+  result: GameResult
+  score: GameScore
 }
 
 export interface GameConfig {
   penalty: number
   questions: number[]
 }
+
+export interface GameResult {
+  total: number
+  base: number
+  penalty: number
+}
+
+export type GameScore = Record<string, number>

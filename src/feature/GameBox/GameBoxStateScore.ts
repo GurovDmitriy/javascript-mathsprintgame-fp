@@ -1,8 +1,9 @@
 import { compile } from "handlebars"
-import { FromJS, fromJS } from "immutable"
+import Immutable, { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
+  distinctUntilChanged,
   filter,
   fromEvent,
   Subject,
@@ -15,7 +16,11 @@ import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { GameBoxContext } from "./types"
 
-interface State {}
+interface State {
+  final: number
+  base: number
+  penalty: number
+}
 
 type StateImm = FromJS<State>
 
@@ -33,7 +38,13 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   ) {
     super()
 
-    this.stateSubject = new BehaviorSubject<StateImm>(fromJS({}))
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        final: 0,
+        base: 0,
+        penalty: 0,
+      }),
+    )
 
     this.state = this.stateSubject.asObservable()
   }
@@ -43,6 +54,17 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
       classes: "btn--play-again btn-box__btn",
       content: "Play Again",
     })
+
+    this.game.state
+      .pipe(
+        distinctUntilChanged((previous, current) =>
+          Immutable.is(previous.get("result"), current.get("result")),
+        ),
+        tap(() => {
+          this.stateSubject.next(this.stateSubject.getValue().set("base", 1500))
+        }),
+      )
+      .subscribe()
   }
 
   onMounted() {
@@ -86,17 +108,17 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
                     </tr>
                     <tr class="table-score__item table-score__item--final-time">
                       <th>Final</th>
-                      <td>0</td>
+                      <td>{{state.final}}</td>
                     </tr>
                     <tr class="table-score__item table-score__item--base-time">
                       <th>Base</th>
-                      <td>0</td>
+                      <td>{{state.base}}</td>
                     </tr>
                     <tr
                       class="table-score__item table-score__item--penalty-time"
                     >
                       <th>Penalty</th>
-                      <td>0</td>
+                      <td>{{state.penalty}}</td>
                     </tr>
                   </table>
                 </div>
