@@ -2,20 +2,13 @@ import { FromJS } from "immutable"
 import { Observable } from "rxjs"
 
 export interface Game {
-  config: GameConfig
   state: Observable<FromJS<GameState>>
+  config: FromJS<GameConfig>
   choice(value: number): void
   play(): void
   reset(): void
   markRight(): void
   markWrong(): void
-}
-
-export interface GameEquation {
-  values: [number, number]
-  type: "multiply" | "division"
-  result: number
-  answer: boolean | null
 }
 
 export interface GameState {
@@ -26,6 +19,13 @@ export interface GameState {
   equations: GameEquation[]
   result: GameResult
   score: GameScore
+}
+
+export interface GameEquation {
+  values: [number, number]
+  type: "multiply" | "division"
+  result: number
+  answer: boolean | null
 }
 
 export interface GameConfig {

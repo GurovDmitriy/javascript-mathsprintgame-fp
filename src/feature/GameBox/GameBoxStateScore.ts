@@ -12,7 +12,7 @@ import {
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { ErrorHandler, Game, Remote } from "../../interfaces"
+import type { ErrorHandler, Game, GameResult, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { GameBoxContext } from "./types"
 
@@ -60,8 +60,18 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
         distinctUntilChanged((previous, current) =>
           Immutable.is(previous.get("result"), current.get("result")),
         ),
-        tap(() => {
-          this.stateSubject.next(this.stateSubject.getValue().set("base", 1500))
+        tap((state) => {
+          const resultRaw = state.toJS().result as GameResult
+
+          this.stateSubject.next(
+            this.stateSubject.getValue().merge(
+              fromJS({
+                final: resultRaw.total,
+                base: resultRaw.base,
+                penalty: resultRaw.penalty,
+              }),
+            ),
+          )
         }),
       )
       .subscribe()

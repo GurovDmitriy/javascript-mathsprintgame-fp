@@ -18,7 +18,7 @@ import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 
 interface State {
-  questions: { classSelected: string; value: number }[]
+  questions: { classSelected: string; value: number; record: number }[]
 }
 
 type StateImm = FromJS<State>
@@ -54,11 +54,14 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
             previous.get("questionValue") === current.get("questionValue"),
         ),
         tap((state) => {
-          const questions = this.game.config.questions.map((q) => {
+          const stateRaw = state.toJS()
+
+          const questions = this.game.config.get("questions").map((q) => {
             return {
               classSelected:
                 state.get("questionValue") === q ? "input-box--active" : "",
               value: q,
+              record: stateRaw.score[String(q)] || 0,
             }
           })
 
@@ -102,7 +105,7 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
                 <span>{{this.value}} Questions</span>
                 <div class="best-score input-box__best-score">
                   <h3 class="best-score__caption">Best Score</h3>
-                  <strong class="best-score__value">0</strong>
+                  <strong class="best-score__value">{{this.record}}</strong>
                 </div></label
               >
               <input
