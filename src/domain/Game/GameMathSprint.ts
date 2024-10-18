@@ -1,14 +1,16 @@
-import Imm, { fromJS, FromJS } from "immutable"
+import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { tryCatch } from "ramda"
-import * as Rx from "rxjs"
 import {
+  BehaviorSubject,
+  debounceTime,
   distinctUntilChanged,
   filter,
-  mergeMap,
+  Observable,
   of,
   scan,
+  Subject,
+  switchMap,
   takeUntil,
   tap,
 } from "rxjs"
@@ -25,19 +27,18 @@ import type {
 
 type GameStateImm = FromJS<GameState>
 
-// TODO: add libs in container
 // TODO: test error service business error vs exception
 // TODO: unit tests
 @injectable()
 export class GameMathSprint implements Game {
   private readonly _errorHandler: ErrorHandler
 
-  private readonly _stateSubject: Rx.BehaviorSubject<GameStateImm>
-  private readonly _choiceSubject: Rx.Subject<number>
-  private readonly _unsubscribe = new Rx.Subject<void>()
+  private readonly _stateSubject: BehaviorSubject<GameStateImm>
+  private readonly _choiceSubject: Subject<number>
+  private readonly _unsubscribe = new Subject<void>()
 
-  public readonly config: Imm.FromJS<GameConfig>
-  public readonly state: Rx.Observable<GameStateImm>
+  public readonly config: FromJS<GameConfig>
+  public readonly state: Observable<GameStateImm>
 
   constructor(
     @inject(TYPES.ErrorHandler) errorHandler: ErrorHandler,
@@ -45,8 +46,8 @@ export class GameMathSprint implements Game {
   ) {
     this._errorHandler = errorHandler
 
-    this._stateSubject = new Rx.BehaviorSubject<GameStateImm>(
-      Imm.fromJS<GameState>({
+    this._stateSubject = new BehaviorSubject<GameStateImm>(
+      fromJS<GameState>({
         active: false,
         end: false,
         questionValue: 0,
@@ -62,22 +63,28 @@ export class GameMathSprint implements Game {
     )
     this.state = this._stateSubject.asObservable()
 
-    this._choiceSubject = new Rx.Subject<number>()
+    this._choiceSubject = new Subject<number>()
     this._choiceSubject
       .pipe(
-        Rx.takeUntil(this._unsubscribe),
-        Rx.debounceTime(200),
-        Rx.tap((value) => this._handleChoice(value)),
+        takeUntil(this._unsubscribe),
+        debounceTime(200),
+        tap((value) => this._handleChoice(value)),
       )
       .subscribe()
 
-    this.config = Imm.fromJS(R.mergeAll([this._getConfigDefault(), config]))
+    this.config = fromJS(R.mergeAll([this._getConfigDefault(), config]))
 
-    tryCatch(this._handleScore, this._errorHandler.handle)()
+    R.tryCatch(
+      () => this._handleScore(),
+      (error) => this._errorHandler.handle(error),
+    )()
   }
 
   choice(value: number): void {
-    R.tryCatch(this._choiceSubject.next, this._errorHandler.handle)(value)
+    R.tryCatch(
+      (value) => this._choiceSubject.next(value),
+      (error) => this._errorHandler.handle(error),
+    )(value)
   }
 
   play(): void {
@@ -85,39 +92,51 @@ export class GameMathSprint implements Game {
       R.ifElse(
         (value: number) => R.lte(value, 0),
         () => this._errorHandler.handle(Error("Question value not select")),
-        () => this._stateSubject.getValue().setIn(["active"], true),
+        () =>
+          this._stateSubject.next(
+            this._stateSubject.getValue().setIn(["active"], true),
+          ),
       ),
-      this._errorHandler.handle,
+      (error) => this._errorHandler.handle(error),
     )(this._stateSubject.getValue().get("questionValue") as number)
   }
 
   reset(): void {
-    R.tryCatch(() => {
-      this._stateSubject.next(
-        this._stateSubject.getValue().merge(
-          fromJS({
-            active: false,
-            end: false,
-            questionValue: 0,
-            equationActive: 0,
-            equations: [],
-            result: {
-              total: 0,
-              base: 0,
-              penalty: 0,
-            },
-          }),
-        ),
-      )
-    }, this._errorHandler.handle)()
+    R.tryCatch(
+      () => {
+        this._stateSubject.next(
+          this._stateSubject.getValue().merge(
+            fromJS({
+              active: false,
+              end: false,
+              questionValue: 0,
+              equationActive: 0,
+              equations: [],
+              result: {
+                total: 0,
+                base: 0,
+                penalty: 0,
+              },
+            }),
+          ),
+        )
+      },
+      (error) => this._errorHandler.handle(error),
+    )()
   }
 
   markRight(): void {
-    R.tryCatch(() => this._handleMark(true), this._errorHandler.handle)()
+    R.tryCatch(
+      () => this._handleMark(true),
+      (error) => this._errorHandler.handle(error),
+    )()
   }
 
   markWrong(): void {
-    R.tryCatch(() => this._handleMark(false), this._errorHandler.handle)()
+    R.tryCatch(
+      () => this._handleMark(false),
+      (error) => this._errorHandler.handle(error),
+    )()
   }
 
   private _handleChoice(value: number): void {
@@ -182,7 +201,7 @@ export class GameMathSprint implements Game {
     of(stateInit)
       .pipe(
         takeUntil(this._unsubscribe),
-        mergeMap((initState: typeof stateInit) => {
+        switchMap((initState: typeof stateInit) => {
           return this.state.pipe(
             filter((state) => R.or(!!state.get("active"), !!state.get("end"))),
             distinctUntilChanged((previous, current) =>
@@ -204,19 +223,19 @@ export class GameMathSprint implements Game {
                 [R.T, ({ acc }) => acc],
               ])({ acc, curr })
             }, initState),
-          )
-        }),
-        tap((state) => {
-          const { result, score } = this._getResultAndScore(
-            state.start,
-            state.end,
-          )
+            tap((state) => {
+              const { result, score } = this._getResultAndScore(
+                state.start,
+                state.end,
+              )
 
-          this._stateSubject.next(
-            this._stateSubject
-              .getValue()
-              .mergeIn("result", fromJS(result))
-              .mergeIn("score", fromJS(score)),
+              this._stateSubject.next(
+                this._stateSubject
+                  .getValue()
+                  .set("result", fromJS(result))
+                  .set("score", fromJS(score)),
+              )
+            }),
           )
         }),
       )
@@ -324,7 +343,7 @@ export class GameMathSprint implements Game {
           "wrongArr",
           Array.from(
             { length: R.subtract(state.count, state.rightCount) },
-            () => this._getEquation(true),
+            () => this._getEquation(false),
             this,
           ),
           state,
