@@ -12,7 +12,7 @@ import {
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { Game } from "../../interfaces"
+import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { SelectQuestion } from "../SelectQuestion"
 import { GameBoxContext } from "./types"
@@ -32,6 +32,8 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
     private selectQuestion: SelectQuestion,
     private startRound: Button,
     @inject(TYPES.Game) private game: Game,
+    @inject(TYPES.Remote) private remote: Remote,
+    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
   ) {
     super()
 
@@ -63,6 +65,9 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
           return target.classList.contains("btn--start")
         }),
         withLatestFrom(this.game.state),
+        tap(() => {
+          this.remote.start()
+        }),
         filter((state) => {
           return (state[1].get("questionValue") as number) > 0
         }),

@@ -1,5 +1,4 @@
 import { Container } from "inversify"
-import { container as containerPainful } from "../../core/compositionRoot/container"
 import { ErrorService } from "../../domain/Error"
 import { GameMathSprint, GameRemote } from "../../domain/Game"
 import type { ErrorHandler, Game, GameConfig, Remote } from "../../interfaces"
@@ -11,12 +10,7 @@ const container = new Container({
   skipBaseClassChecks: true,
 })
 
-container.parent = containerPainful
-
-container
-  .bind<ErrorHandler>(TYPES.ErrorHandler)
-  .to(ErrorService)
-  .inSingletonScope()
+container.bind<ErrorHandler>(TYPES.ErrorHandler).to(ErrorService)
 
 container.bind<Game>(TYPES.Game).to(GameMathSprint).inSingletonScope()
 container

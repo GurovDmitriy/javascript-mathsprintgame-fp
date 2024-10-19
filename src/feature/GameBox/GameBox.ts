@@ -1,9 +1,11 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
-import { injectable } from "inversify"
+import { inject, injectable } from "inversify"
 import { BehaviorSubject, Subject } from "rxjs"
+import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
+import type { ErrorHandler, Game } from "../../interfaces"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
 import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
 import { GameBoxStateScore } from "./GameBoxStateScore"
@@ -28,6 +30,8 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
   public children: Children<ComponentNames>
 
   constructor(
+    @inject(TYPES.Game) private game: Game,
+    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
     private stateStart: GameBoxStateStart,
     private stateCountdown: GameBoxStateCountdown,
     private stateQuiz: GameBoxStateQuiz,
@@ -65,6 +69,10 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
     )
 
     this.state = this.stateSubject.asObservable()
+
+    this.game.error.subscribe((err) => {
+      this.errorHandler.handle(err)
+    })
   }
 
   onInit() {
