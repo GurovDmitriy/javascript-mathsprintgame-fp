@@ -4,7 +4,6 @@ import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
   distinctUntilChanged,
-  filter,
   fromEvent,
   Subject,
   takeUntil,
@@ -14,6 +13,7 @@ import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, GameResult, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
+import { delegate } from "../../shared/tools/delegate"
 import { GameBoxContext } from "./types"
 
 interface State {
@@ -49,12 +49,23 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
     this.state = this.stateSubject.asObservable()
   }
 
-  onInit() {
+  onInit(): void {
+    this._handleSetProps()
+    this._handleResult()
+  }
+
+  onMounted(): void {
+    this._handleReplay()
+  }
+
+  private _handleSetProps(): void {
     this.playAgain.setProps({
       classes: "btn--play-again btn-box__btn",
       content: "Play Again",
     })
+  }
 
+  private _handleResult(): void {
     this.game.state
       .pipe(
         distinctUntilChanged((previous, current) =>
@@ -77,14 +88,11 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
       .subscribe()
   }
 
-  onMounted() {
+  private _handleReplay(): void {
     fromEvent(document, "click")
       .pipe(
         takeUntil(this.unsubscribe),
-        filter((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("btn--play-again")
-        }),
+        delegate("btn--play-again"),
         tap(() => {
           this.remote.replay()
           this.props.setState("start")
@@ -93,9 +101,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
       .subscribe()
   }
 
-  onUpdated() {}
-
-  render() {
+  render(): string {
     const template = compile(`
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>

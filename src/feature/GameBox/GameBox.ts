@@ -6,7 +6,7 @@ import { BehaviorSubject, filter, Subject, takeUntil, tap } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
-import type { ErrorHandler, Game } from "../../interfaces"
+import type { Game } from "../../interfaces"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
 import { GameBoxStateError } from "./GameBoxStateError"
 import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
@@ -34,7 +34,6 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
 
   constructor(
     @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
     private stateStart: GameBoxStateStart,
     private stateCountdown: GameBoxStateCountdown,
     private stateQuiz: GameBoxStateQuiz,

@@ -1,6 +1,7 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import * as R from "ramda"
 import {
   BehaviorSubject,
   finalize,
@@ -47,13 +48,17 @@ export class GameBoxStateCountdown extends ComponentBase<
   }
 
   onMounted() {
+    this._handleTimer()
+  }
+
+  private _handleTimer() {
     timer(0, 1000)
       .pipe(
         takeUntil(this.unsubscribe),
         take(4),
         tap((count: number) => {
           this.stateSubject.next(
-            this.stateSubject.getValue().set("timer", 3 - count),
+            this.stateSubject.getValue().set("timer", R.subtract(3, count)),
           )
         }),
         finalize(() => {

@@ -5,7 +5,6 @@ import * as R from "ramda"
 import {
   BehaviorSubject,
   distinctUntilChanged,
-  filter,
   fromEvent,
   Subject,
   takeUntil,
@@ -15,6 +14,7 @@ import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, ErrorInfo, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
+import { delegate } from "../../shared/tools/delegate"
 import { GameBoxContext } from "./types"
 
 interface State {
@@ -47,11 +47,35 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   onInit() {
+    this._handleSetProps()
+    this._handleError()
+  }
+
+  onMounted() {
+    this._handleToggleState()
+  }
+
+  private _handleToggleState() {
+    fromEvent(document, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        delegate("btn--play-again"),
+        tap(() => {
+          this.remote.replay()
+          this.props.setState("start")
+        }),
+      )
+      .subscribe()
+  }
+
+  private _handleSetProps() {
     this.tryAgain.setProps({
       classes: "btn--play-again btn-box__btn",
       content: "Try Again",
     })
+  }
 
+  private _handleError() {
     this.game.error
       .pipe(
         distinctUntilChanged((previous, current) =>
@@ -67,24 +91,6 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
       )
       .subscribe()
   }
-
-  onMounted() {
-    fromEvent(document, "click")
-      .pipe(
-        takeUntil(this.unsubscribe),
-        filter((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("btn--play-again")
-        }),
-        tap(() => {
-          this.remote.replay()
-          this.props.setState("start")
-        }),
-      )
-      .subscribe()
-  }
-
-  onUpdated() {}
 
   render() {
     const template = compile(`

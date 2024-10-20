@@ -1,6 +1,7 @@
 import { compile } from "handlebars"
 import { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import * as R from "ramda"
 import {
   BehaviorSubject,
   catchError,
@@ -16,6 +17,7 @@ import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, GameEquation, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
+import { delegate } from "../../shared/tools/delegate"
 import { GameBoxContext } from "./types"
 
 interface State {
@@ -54,6 +56,20 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   onInit() {
+    this._handleSetProps()
+    this._handleAnswerActive()
+    this._handleToggleState()
+  }
+
+  onMounted() {
+    this._handleBtnAnswer()
+  }
+
+  onUpdated() {
+    this._handleScrollContainer()
+  }
+
+  private _handleSetProps() {
     this.btnWrong.setProps({
       classes: "btn--wrong btn-quiz-box__btn",
       content: "Wrong",
@@ -63,19 +79,9 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
       classes: "btn--right btn-quiz-box__btn",
       content: "Right",
     })
+  }
 
-    this.game.state
-      .pipe(
-        takeUntil(this.unsubscribe),
-        filter((data) => {
-          return data.get("end") === true
-        }),
-        tap(() => {
-          this.props.setState("score")
-        }),
-      )
-      .subscribe()
-
+  private _handleAnswerActive() {
     this.game.state
       .pipe(
         takeUntil(this.unsubscribe),
@@ -101,14 +107,25 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
       .subscribe()
   }
 
-  onMounted() {
+  private _handleToggleState() {
+    this.game.state
+      .pipe(
+        takeUntil(this.unsubscribe),
+        filter((data) => {
+          return R.equals(data.get("end") as unknown as boolean, true)
+        }),
+        tap(() => {
+          this.props.setState("score")
+        }),
+      )
+      .subscribe()
+  }
+
+  private _handleBtnAnswer() {
     fromEvent(document, "click")
       .pipe(
         takeUntil(this.unsubscribe),
-        filter((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("btn-quiz-box__btn")
-        }),
+        delegate("btn-quiz-box__btn"),
         map((event) => {
           const target = event.target as HTMLElement
           return target.classList.contains("btn--wrong") ? "wrong" : "right"
@@ -128,7 +145,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
       .subscribe()
   }
 
-  onUpdated() {
+  private _handleScrollContainer() {
     const ele = document.querySelector(".quiz__item--active")
     if (ele) {
       queueMicrotask(() => {

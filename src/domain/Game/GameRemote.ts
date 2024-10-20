@@ -2,10 +2,6 @@ import { inject, injectable } from "inversify"
 import { TYPES } from "../../app/compositionRoot/types"
 import type { Game, Remote } from "../../interfaces"
 
-/**
- * GameRemote - abstraction
- * Powered by Bridge design pattern
- */
 @injectable()
 export class GameRemote implements Remote {
   private _game: Game

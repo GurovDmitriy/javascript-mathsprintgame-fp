@@ -14,6 +14,7 @@ import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
+import { delegate } from "../../shared/tools/delegate"
 import { SelectQuestion } from "../SelectQuestion"
 import { GameBoxContext } from "./types"
 
@@ -50,20 +51,25 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   onInit() {
+    this._handleSetProps()
+  }
+
+  onMounted() {
+    this._handleStartGame()
+  }
+
+  private _handleSetProps(): void {
     this.startRound.setProps({
       classes: "btn--start btn-box__btn",
       content: "Start Round",
     })
   }
 
-  onMounted() {
+  private _handleStartGame(): void {
     fromEvent(document, "click")
       .pipe(
         takeUntil(this.unsubscribe),
-        filter((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("btn--start")
-        }),
+        delegate("btn--start"),
         withLatestFrom(this.game.state),
         tap(() => {
           this.remote.start()
