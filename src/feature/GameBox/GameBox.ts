@@ -1,12 +1,14 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
-import { BehaviorSubject, Subject } from "rxjs"
+import * as R from "ramda"
+import { BehaviorSubject, filter, Subject, tap } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
 import type { ErrorHandler, Game } from "../../interfaces"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
+import { GameBoxStateError } from "./GameBoxStateError"
 import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
 import { GameBoxStateScore } from "./GameBoxStateScore"
 import { GameBoxStateStart } from "./GameBoxStateStart"
@@ -18,6 +20,7 @@ interface State {
   countdown: boolean
   quiz: boolean
   score: boolean
+  error: boolean
 }
 
 type StateImm = FromJS<State>
@@ -36,6 +39,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
     private stateCountdown: GameBoxStateCountdown,
     private stateQuiz: GameBoxStateQuiz,
     private stateScore: GameBoxStateScore,
+    private stateError: GameBoxStateError,
   ) {
     super()
 
@@ -56,6 +60,10 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         value: "score",
         component: this.stateScore,
       },
+      error: {
+        value: "error",
+        component: this.stateError,
+      },
     }
 
     this.stateSubject = new BehaviorSubject<StateImm>(
@@ -65,14 +73,24 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         countdown: false,
         quiz: false,
         score: false,
+        error: false,
       } satisfies State),
     )
 
     this.state = this.stateSubject.asObservable()
 
-    this.game.error.subscribe((err) => {
-      this.errorHandler.handle(err)
-    })
+    this.game.error
+      .pipe(
+        filter((error) => error !== null),
+        tap((error) => {
+          R.ifElse(
+            (err) => err !== null,
+            () => this.setState("error"),
+            () => {},
+          )(error)
+        }),
+      )
+      .subscribe()
   }
 
   onInit() {
@@ -108,6 +126,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
           countdown: name === "countdown",
           quiz: name === "quiz",
           score: name === "score",
+          error: name === "error",
         }),
       ),
     )
@@ -132,6 +151,10 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         <div class="header-game-box__inner" {{{idParentAttrStateScore}}}>
         </div>
         {{/if}}
+        {{#if state.error}}
+        <div class="header-game-box__inner" {{{idParentAttrStateError}}}>
+        </div>
+        {{/if}}
       </div>
     `)
 
@@ -140,6 +163,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
       idParentAttrStateCountdown: this.stateCountdown.idParentAttr,
       idParentAttrStateQuiz: this.stateQuiz.idParentAttr,
       idParentAttrStateScore: this.stateScore.idParentAttr,
+      idParentAttrStateError: this.stateError.idParentAttr,
       state: this.stateSubject.getValue().toJS(),
     })
   }

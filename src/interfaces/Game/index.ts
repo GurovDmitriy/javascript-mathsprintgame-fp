@@ -1,10 +1,6 @@
 import { FromJS } from "immutable"
 import { Observable } from "rxjs"
-import { ErrorCustom, ErrorMap } from "../Error"
-
-export const ERROR_CODE: ErrorMap = {
-  questionNotSelected: "questionNotSelected",
-} as const
+import { ErrorCustom } from "../Error"
 
 export interface Game {
   state: Observable<FromJS<GameState>>

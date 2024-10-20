@@ -1,53 +1,50 @@
-import { injectable } from "inversify"
+import { inject, injectable } from "inversify"
+import { TYPES } from "../../app/compositionRoot/types"
 import type {
   ErrorConfig,
   ErrorCustom,
   ErrorHandler,
   ErrorInfo,
 } from "../../interfaces"
-import { ERROR_CODE } from "../../interfaces"
-import { ErrorHeavy, ErrorLight } from "./ErrorCreator"
+import { ErrorHeavy } from "./ErrorHeavy"
+import { ErrorLight } from "./ErrorLight"
 import { ErrorReadable } from "./ErrorReadable"
 
 @injectable()
 export class ErrorService implements ErrorHandler {
-  private readonly errorMap = {
-    [ERROR_CODE.questionNotSelected]: {
-      message: "You not select count question",
-      level: "log",
-      code: 200,
-    },
-  } as ErrorConfig
+  constructor(@inject(TYPES.ErrorConfig) private errorConfig: ErrorConfig) {}
 
-  private readonly levelDefault = "log"
-  private readonly codeDefault = "log"
+  handle(error: ErrorCustom | null): ErrorInfo | null {
+    if (!error) return null
 
-  constructor() {}
+    const errorCode = (error as any).code ? (error as any).code : undefined
+    const info = this.errorConfig.config[errorCode]
+    const errorReadable = new ErrorReadable(info.message, info.code)
 
-  handle(error: ErrorCustom): ErrorInfo {
+    if (info.level === "log") {
+      this._handleLevelLog(error)
+    }
+
+    if (info.level === "warning") {
+      this._handleLevelWarn(error)
+    }
+
+    if (info.level === "error") {
+      this._handleLevelError(error)
+    }
+
     if (error instanceof ErrorLight) {
-      const info = this.errorMap[error.code]
-
-      const errorReadable = new ErrorReadable(info.message, info.code)
-
-      if (info.level === "log") {
-        this._handleLevelLog(errorReadable)
-      }
-
       return errorReadable
     }
 
     if (error instanceof ErrorHeavy) {
-      this._handleLevelError(error)
       return new ErrorReadable()
     }
 
     if (error instanceof Error) {
-      this._handleLevelError(error)
       return new ErrorReadable()
     }
 
-    this._handleLevelError(error)
     return new ErrorReadable()
   }
 

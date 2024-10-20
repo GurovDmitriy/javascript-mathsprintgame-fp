@@ -13,8 +13,7 @@ export type ErrorCustom = ErrorBase | ErrorDefault
 export interface ErrorBase {
   name: string
   message: ErrorMessage
-  code?: ErrorCode
-  codeCustom?: ErrorCodeCustom
+  code: ErrorCodeCustom
 }
 
 /**
@@ -53,15 +52,17 @@ export type ErrorMap = Record<ErrorCode, ErrorMessage>
 /**
  * Readable error config
  */
-export type ErrorConfig = Record<
-  ErrorCodeCustom,
-  {
-    message: ErrorMessage
-    level?: ErrorLevel
-    code?: ErrorCode
-  }
->
+export interface ErrorConfig {
+  config: Record<
+    ErrorCodeCustom,
+    {
+      message: ErrorMessage
+      level?: ErrorLevel
+      code?: ErrorCode
+    }
+  >
+}
 
 export interface ErrorHandler {
-  handle(error: ErrorCustom): ErrorInfo
+  handle(error: ErrorCustom | null): ErrorInfo | null
 }

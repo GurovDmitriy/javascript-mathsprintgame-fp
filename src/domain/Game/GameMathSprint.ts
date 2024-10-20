@@ -25,15 +25,15 @@ import type {
   GameScore,
   GameState,
 } from "../../interfaces"
-import { ERROR_CODE } from "../../interfaces"
 import { ErrorLight } from "../Error"
+import { GAME_ERROR_CODE } from "./types"
 
 type GameStateImm = FromJS<GameState>
 
 @injectable()
 export class GameMathSprint implements Game {
   private readonly _stateSubject: BehaviorSubject<GameStateImm>
-  private readonly _errorSubject: Subject<ErrorCustom | null>
+  private readonly _errorSubject: BehaviorSubject<ErrorCustom | null>
   private readonly _choiceSubject: Subject<number>
   private readonly _unsubscribe = new Subject<void>()
 
@@ -59,7 +59,7 @@ export class GameMathSprint implements Game {
     )
     this.state = this._stateSubject.asObservable()
 
-    this._errorSubject = new Subject<ErrorCustom | null>()
+    this._errorSubject = new BehaviorSubject<ErrorCustom | null>(null)
     this.error = this._errorSubject
       .asObservable()
       .pipe(distinctUntilChanged((previous, current) => previous === current))
@@ -80,7 +80,10 @@ export class GameMathSprint implements Game {
 
   choice(value: number): void {
     R.tryCatch(
-      (value) => this._choiceSubject.next(value),
+      R.pipe(
+        (state) => this._handleIfExistError(state),
+        (value) => this._choiceSubject.next(value),
+      ),
       (error) => this._errorSubject.next(error),
     )(value)
   }
@@ -94,7 +97,7 @@ export class GameMathSprint implements Game {
     const ifNotAvailable = () => {
       throw new ErrorLight(
         "Question not selected",
-        ERROR_CODE.questionNotSelected,
+        GAME_ERROR_CODE.questionNotSelected,
       )
     }
     const updateState = () => {
@@ -104,7 +107,10 @@ export class GameMathSprint implements Game {
     }
 
     R.tryCatch(
-      R.ifElse(isAvailablePlay, ifNotAvailable, updateState),
+      R.pipe(
+        (state) => this._handleIfExistError(state),
+        R.ifElse(isAvailablePlay, ifNotAvailable, updateState),
+      ),
       (error) => this._errorSubject.next(error),
     )(stateInit)
   }
@@ -137,16 +143,34 @@ export class GameMathSprint implements Game {
 
   markRight(): void {
     R.tryCatch(
-      () => this._handleMark(true),
+      R.pipe(
+        () => this._handleIfExistError(),
+        () => this._handleMark(true),
+      ),
       (error) => this._errorSubject.next(error),
     )()
   }
 
   markWrong(): void {
     R.tryCatch(
-      () => this._handleMark(false),
+      R.pipe(
+        () => this._handleIfExistError(),
+        () => this._handleMark(false),
+      ),
       (error) => this._errorSubject.next(error),
     )()
+  }
+
+  private _handleIfExistError<T = undefined>(state?: T): T | undefined {
+    const error = this._errorSubject.getValue()
+
+    return R.ifElse(
+      (err: typeof error) => R.equals(err, null),
+      () => state,
+      (error) => {
+        throw error
+      },
+    )(error)
   }
 
   private _handleClearError() {
@@ -343,7 +367,7 @@ export class GameMathSprint implements Game {
     return {
       penalty: 15000,
       questions: [10, 25, 50, 99],
-    }
+    } as GameConfig
   }
 
   private _getStateRaw(): GameState {

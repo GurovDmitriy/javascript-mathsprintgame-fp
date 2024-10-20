@@ -1,6 +1,7 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import * as R from "ramda"
 import {
   BehaviorSubject,
   catchError,
@@ -49,25 +50,43 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
     this.game.state
       .pipe(
         takeUntil(this.unsubscribe),
-        distinctUntilChanged(
-          (previous, current) =>
-            previous.get("questionValue") === current.get("questionValue"),
+        distinctUntilChanged((previous, current) =>
+          R.equals(previous.get("questionValue"), current.get("questionValue")),
         ),
         tap((state) => {
-          const stateRaw = state.toJS()
+          const stateInit = {
+            questionValue: state.get("questionValue") as unknown as number,
+            stateRaw: state.toJS() as { score: Record<string, number> },
+            questions: this.game.config.get("questions") as unknown as number[],
+            questionsFormatted: [] as State[],
+          }
 
-          const questions = this.game.config.get("questions").map((q) => {
-            return {
-              classSelected:
-                state.get("questionValue") === q ? "input-box--active" : "",
-              value: q,
-              record: stateRaw.score[String(q)] || 0,
-            }
-          })
-
-          this.stateSubject.next(
-            this.stateSubject.getValue().set("questions", fromJS(questions)),
-          )
+          R.pipe(
+            (state: typeof stateInit) => {
+              return R.assoc(
+                "questionsFormatted",
+                R.map((question: number) => {
+                  return {
+                    classSelected: R.ifElse(
+                      (value: number) => R.equals(value, question),
+                      () => "input-box--active",
+                      () => "",
+                    )(state.questionValue),
+                    value: question,
+                    record: R.or(state.stateRaw.score[String(question)], 0),
+                  }
+                }, state.questions),
+                state,
+              )
+            },
+            (state) => {
+              this.stateSubject.next(
+                this.stateSubject
+                  .getValue()
+                  .set("questions", fromJS(state.questionsFormatted)),
+              )
+            },
+          )(stateInit)
         }),
       )
       .subscribe()
