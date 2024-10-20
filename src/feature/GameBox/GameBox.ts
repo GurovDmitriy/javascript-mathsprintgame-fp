@@ -2,7 +2,7 @@ import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { BehaviorSubject, filter, Subject, tap } from "rxjs"
+import { BehaviorSubject, filter, Subject, takeUntil, tap } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
@@ -78,43 +78,15 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
     )
 
     this.state = this.stateSubject.asObservable()
-
-    this.game.error
-      .pipe(
-        filter((error) => error !== null),
-        tap((error) => {
-          R.ifElse(
-            (err) => err !== null,
-            () => this.setState("error"),
-            () => {},
-          )(error)
-        }),
-      )
-      .subscribe()
   }
 
   onInit() {
-    const context: GameBoxContext = {
-      setState: this.setState.bind(this),
-    }
-
-    Object.values(this.children).forEach((c) => c.component.setProps(context))
+    this._handlerError()
+    this._handlerSetPropsChildren()
   }
 
   onUpdated() {
-    const active = this.stateSubject.getValue().get("active") as
-      | ComponentNames
-      | undefined
-
-    if (active) {
-      this.children[active].component.create()
-
-      for (const [name, value] of Object.entries(this.children)) {
-        if (name !== active) {
-          value.component.destroy()
-        }
-      }
-    }
+    this._handlerRecreateChildren()
   }
 
   setState(name: ComponentNames) {
@@ -130,6 +102,49 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         }),
       ),
     )
+  }
+
+  private _handlerError() {
+    this.game.error
+      .pipe(
+        takeUntil(this.unsubscribe),
+        filter((error) => error !== null),
+        tap((error) => {
+          R.ifElse(
+            (err) => err !== null,
+            () => this.setState("error"),
+            () => {},
+          )(error)
+        }),
+      )
+      .subscribe()
+  }
+
+  private _handlerSetPropsChildren() {
+    const context: GameBoxContext = {
+      setState: this.setState.bind(this),
+    }
+
+    R.forEach((c) => c.component.setProps(context), R.values(this.children))
+  }
+
+  private _handlerRecreateChildren() {
+    const active = this.stateSubject.getValue().get("active") as ComponentNames
+
+    R.ifElse(
+      (value: typeof active) => R.isNotNil(value),
+      (value) => {
+        this.children[value].component.create()
+
+        R.pipe(
+          (children: typeof this.children) => R.toPairs(children),
+          (pairs) =>
+            R.filter(([name]) => R.complement(R.equals(active))(name), pairs),
+          R.forEach(([, value]) => value.component.destroy()),
+        )(this.children)
+      },
+      () => {},
+    )(active)
   }
 
   render() {
