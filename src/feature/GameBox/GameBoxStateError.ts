@@ -6,6 +6,7 @@ import {
   BehaviorSubject,
   distinctUntilChanged,
   fromEvent,
+  Observable,
   Subject,
   takeUntil,
   tap,
@@ -25,17 +26,19 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
 
   constructor(
-    private tryAgain: Button,
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
-    @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.Remote) private remote: Remote,
+    private _tryAgain: Button,
+    @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
+    @inject(TYPES.Game) private _game: Game,
+    @inject(TYPES.Remote) private _remote: Remote,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
@@ -61,7 +64,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
         takeUntil(this.unsubscribe),
         delegate("btn--play-again"),
         tap(() => {
-          this.remote.replay()
+          this._remote.replay()
           this.props.setState("start")
         }),
       )
@@ -69,14 +72,14 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleSetProps() {
-    this.tryAgain.setProps({
+    this._tryAgain.setProps({
       classes: "btn--play-again btn-box__btn",
       content: "Try Again",
     })
   }
 
   private _handleError() {
-    this.game.error
+    this._game.error
       .pipe(
         distinctUntilChanged((previous, current) =>
           R.equals(previous, current),
@@ -85,7 +88,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
           this.stateSubject.next(
             this.stateSubject
               .getValue()
-              .set("error", fromJS(this.errorHandler.handle(error))),
+              .set("error", fromJS(this._errorHandler.handle(error))),
           )
         }),
       )
@@ -139,7 +142,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
 
     return template({
       state: this.stateSubject.getValue().toJS(),
-      tryAgain: this.tryAgain.render(),
+      tryAgain: this._tryAgain.render(),
     })
   }
 }

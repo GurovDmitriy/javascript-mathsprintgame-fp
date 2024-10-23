@@ -5,6 +5,7 @@ import * as R from "ramda"
 import {
   BehaviorSubject,
   finalize,
+  Observable,
   Subject,
   take,
   takeUntil,
@@ -27,12 +28,14 @@ export class GameBoxStateCountdown extends ComponentBase<
   GameBoxContext,
   StateImm
 > {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
 
-  constructor(@inject(TYPES.Remote) private remote: Remote) {
+  constructor(@inject(TYPES.Remote) private _remote: Remote) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
@@ -63,7 +66,7 @@ export class GameBoxStateCountdown extends ComponentBase<
         }),
         finalize(() => {
           this.props.setState("quiz")
-          this.remote.start()
+          this._remote.start()
         }),
       )
       .subscribe()

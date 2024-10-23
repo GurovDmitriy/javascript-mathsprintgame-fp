@@ -8,18 +8,28 @@ import type {
 } from "../../interfaces"
 import { ErrorHeavy } from "./ErrorHeavy"
 import { ErrorLight } from "./ErrorLight"
-import { ErrorReadable } from "./ErrorReadable"
 
 @injectable()
 export class ErrorService implements ErrorHandler {
-  constructor(@inject(TYPES.ErrorConfig) private errorConfig: ErrorConfig) {}
+  constructor(
+    @inject(TYPES.ErrorReadableFactory)
+    private _errorReadableFactory: (
+      message: string,
+      code: string | number,
+    ) => ErrorInfo,
+    @inject(TYPES.ErrorConfig) private _errorConfig: ErrorConfig,
+  ) {}
 
   handle(error: ErrorCustom | null): ErrorInfo | null {
     if (!error) return null
 
-    const errorCode = (error as any).code ? (error as any).code : undefined
-    const info = this.errorConfig.config[errorCode]
-    const errorReadable = new ErrorReadable(info.message, info.code)
+    const errorCode = (error as any).code ? (error as any).code : ""
+    const info = this._errorConfig.config?.[errorCode] || {
+      message: "",
+      code: "",
+    }
+
+    const errorReadable = this._errorReadableFactory(info.message, info.code)
 
     if (info.level === "log") {
       this._handleLevelLog(error)
@@ -38,14 +48,14 @@ export class ErrorService implements ErrorHandler {
     }
 
     if (error instanceof ErrorHeavy) {
-      return new ErrorReadable()
+      return this._errorReadableFactory("", "")
     }
 
     if (error instanceof Error) {
-      return new ErrorReadable()
+      return this._errorReadableFactory("", "")
     }
 
-    return new ErrorReadable()
+    return this._errorReadableFactory("", "")
   }
 
   private _handleLevelLog(error: ErrorCustom): void {

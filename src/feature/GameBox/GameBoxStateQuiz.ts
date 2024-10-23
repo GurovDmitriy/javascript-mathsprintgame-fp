@@ -8,6 +8,7 @@ import {
   filter,
   fromEvent,
   map,
+  Observable,
   of,
   Subject,
   takeUntil,
@@ -33,18 +34,20 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
 
   constructor(
     private btnWrong: Button,
     private btnRight: Button,
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
-    @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.Remote) private remote: Remote,
+    @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
+    @inject(TYPES.Game) private _game: Game,
+    @inject(TYPES.Remote) private _remote: Remote,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
@@ -82,7 +85,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleAnswerActive() {
-    this.game.state
+    this._game.state
       .pipe(
         takeUntil(this.unsubscribe),
         tap((data) => {
@@ -108,7 +111,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleToggleState() {
-    this.game.state
+    this._game.state
       .pipe(
         takeUntil(this.unsubscribe),
         filter((data) => {
@@ -127,18 +130,22 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
         takeUntil(this.unsubscribe),
         delegate("btn-quiz-box__btn"),
         map((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("btn--wrong") ? "wrong" : "right"
+          R.ifElse(
+            (e: Event) =>
+              (e.target as HTMLElement).classList.contains("btn--wrong"),
+            () => "wrong",
+            () => "right",
+          )(event)
         }),
         tap((typeAnswer) => {
-          if (typeAnswer === "wrong") {
-            this.remote.wrong()
-          } else {
-            this.remote.right()
-          }
+          R.ifElse(
+            (answer) => R.equals(answer, "wrong"),
+            () => this._remote.wrong(),
+            () => this._remote.right(),
+          )(typeAnswer)
         }),
         catchError((error) => {
-          this.errorHandler.handle(error)
+          this._errorHandler.handle(error)
           return of(error)
         }),
       )

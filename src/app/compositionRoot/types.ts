@@ -1,7 +1,18 @@
 export const TYPES = {
-  ErrorHandler: Symbol.for("ErrorHandler"),
-  Game: Symbol.for("Game"),
-  GameConfig: Symbol.for("GameConfig"),
-  ErrorConfig: Symbol.for("ErrorConfig"),
-  Remote: Symbol.for("Remote"),
+  // Classes
+  ErrorHeavy: Symbol.for("class.ErrorHeavy"),
+  ErrorLight: Symbol.for("class.ErrorLight"),
+  ErrorReadable: Symbol.for("class.ErrorReadable"),
+
+  // Factories
+  ErrorHeavyFactory: Symbol.for("factory.ErrorHeavy"),
+  ErrorLightFactory: Symbol.for("factory.ErrorLight"),
+  ErrorReadableFactory: Symbol.for("factory.ErrorReadable"),
+
+  // Services
+  ErrorHandler: Symbol.for("service.ErrorHandler"),
+  Game: Symbol.for("service.Game"),
+  GameConfig: Symbol.for("service.GameConfig"),
+  ErrorConfig: Symbol.for("service.ErrorConfig"),
+  Remote: Symbol.for("service.Remote"),
 }

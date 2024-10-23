@@ -17,7 +17,10 @@ import {
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import type {
+  ErrorBase,
+  ErrorCodeCustom,
   ErrorCustom,
+  ErrorMessage,
   Game,
   GameConfig,
   GameEquation,
@@ -25,7 +28,6 @@ import type {
   GameScore,
   GameState,
 } from "../../interfaces"
-import { ErrorLight } from "../Error"
 import { GAME_ERROR_CODE } from "./types"
 
 type GameStateImm = FromJS<GameState>
@@ -35,13 +37,31 @@ export class GameMathSprint implements Game {
   private readonly _stateSubject: BehaviorSubject<GameStateImm>
   private readonly _errorSubject: BehaviorSubject<ErrorCustom | null>
   private readonly _choiceSubject: Subject<number>
-  private readonly _unsubscribe = new Subject<void>()
+  private readonly _unsubscribe: Subject<void>
 
   public readonly config: FromJS<GameConfig>
   public readonly state: Observable<GameStateImm>
   public readonly error: Observable<ErrorCustom | null>
 
-  constructor(@inject(TYPES.GameConfig) config: GameConfig) {
+  constructor(
+    @inject(TYPES.GameConfig) config: GameConfig,
+    @inject(TYPES.ErrorLightFactory)
+    private _errorLightFactory: (
+      message?: ErrorMessage,
+      code?: ErrorCodeCustom,
+    ) => ErrorBase,
+  ) {
+    this._unsubscribe = new Subject<void>()
+
+    this._errorSubject = new BehaviorSubject<ErrorCustom | null>(null)
+    this.error = this._errorSubject
+      .asObservable()
+      .pipe(
+        distinctUntilChanged((previous, current) =>
+          R.equals(previous, current),
+        ),
+      )
+
     this._stateSubject = new BehaviorSubject<GameStateImm>(
       fromJS<GameState>({
         active: false,
@@ -59,11 +79,6 @@ export class GameMathSprint implements Game {
     )
     this.state = this._stateSubject.asObservable()
 
-    this._errorSubject = new BehaviorSubject<ErrorCustom | null>(null)
-    this.error = this._errorSubject
-      .asObservable()
-      .pipe(distinctUntilChanged((previous, current) => previous === current))
-
     this._choiceSubject = new Subject<number>()
     this._choiceSubject
       .pipe(
@@ -73,8 +88,7 @@ export class GameMathSprint implements Game {
       )
       .subscribe()
 
-    this.config = fromJS(R.mergeAll([this._getConfigDefault(), config]))
-
+    this.config = this._getConfig(config)
     this._handleScore()
   }
 
@@ -93,9 +107,9 @@ export class GameMathSprint implements Game {
       .getValue()
       .get("questionValue") as number
 
-    const isAvailablePlay = (state: typeof stateInit) => R.lte(state, 0)
+    const isAvailablePlay = (state: typeof stateInit) => R.gt(state, 0)
     const ifNotAvailable = () => {
-      throw new ErrorLight(
+      throw this._errorLightFactory(
         "Question not selected",
         GAME_ERROR_CODE.questionNotSelected,
       )
@@ -109,7 +123,7 @@ export class GameMathSprint implements Game {
     R.tryCatch(
       R.pipe(
         (state) => this._handleIfExistError(state),
-        R.ifElse(isAvailablePlay, ifNotAvailable, updateState),
+        R.ifElse(isAvailablePlay, updateState, ifNotAvailable),
       ),
       (error) => this._errorSubject.next(error),
     )(stateInit)
@@ -363,11 +377,16 @@ export class GameMathSprint implements Game {
     )(stateInit)
   }
 
-  private _getConfigDefault(): GameConfig {
-    return {
-      penalty: 15000,
-      questions: [10, 25, 50, 99],
-    } as GameConfig
+  private _getConfig(config: GameConfig): FromJS<GameConfig> {
+    return fromJS(
+      R.mergeAll([
+        {
+          penalty: 15000,
+          questions: [10, 25, 50, 99],
+        } as GameConfig,
+        config,
+      ]),
+    )
   }
 
   private _getStateRaw(): GameState {

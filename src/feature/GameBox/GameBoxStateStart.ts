@@ -1,10 +1,14 @@
 import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import * as R from "ramda"
 import {
   BehaviorSubject,
+  catchError,
   filter,
   fromEvent,
+  Observable,
+  of,
   Subject,
   takeUntil,
   tap,
@@ -12,6 +16,7 @@ import {
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
+import { Children } from "../../core/interface/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { delegate } from "../../shared/tools/delegate"
@@ -24,19 +29,21 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
-  public children
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
+  public children: Children<"selectQuestion">
 
   constructor(
     private selectQuestion: SelectQuestion,
     private startRound: Button,
+    @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private game: Game,
     @inject(TYPES.Remote) private remote: Remote,
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.children = {
       selectQuestion: {
@@ -75,10 +82,14 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
           this.remote.start()
         }),
         filter((state) => {
-          return (state[1].get("questionValue") as number) > 0
+          return R.gt(state[1].get("questionValue") as number, 0)
         }),
         tap(() => {
           this.props.setState("countdown")
+        }),
+        catchError((error) => {
+          this._errorHandler.handle(error)
+          return of(error)
         }),
       )
       .subscribe()

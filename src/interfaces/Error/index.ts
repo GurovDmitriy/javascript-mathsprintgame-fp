@@ -16,18 +16,11 @@ export interface ErrorBase {
   code: ErrorCodeCustom
 }
 
-/**
- * Described Error object
- */
 export interface ErrorInfo {
   message: ErrorMessage
   code: ErrorCode
 }
 
-/**
- * Message - define as instance light error like a plain object
- * Exception - define as instance heavy error like a Error instance
- */
 export const ERROR_TYPE: Record<ErrorType, ErrorType> = {
   message: "message",
   exception: "exception",
@@ -44,24 +37,21 @@ export const ERROR_LOCATION: Record<ErrorLocation, ErrorLocation> = {
   global: "global",
 } as const
 
-/**
- * Custom code constant
- */
 export type ErrorMap = Record<ErrorCode, ErrorMessage>
 
-/**
- * Readable error config
- */
 export interface ErrorConfig {
-  config: Record<
-    ErrorCodeCustom,
-    {
-      message: ErrorMessage
-      level?: ErrorLevel
-      code?: ErrorCode
-    }
-  >
+  config: ErrorConfigMap
 }
+
+export type ErrorConfigMap = Record<
+  ErrorCodeCustom,
+  {
+    message: ErrorMessage
+    level: ErrorLevel
+    code: ErrorCode
+    location: ErrorLocation
+  }
+>
 
 export interface ErrorHandler {
   handle(error: ErrorCustom | null): ErrorInfo | null

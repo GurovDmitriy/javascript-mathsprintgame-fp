@@ -2,7 +2,14 @@ import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { BehaviorSubject, filter, Subject, takeUntil, tap } from "rxjs"
+import {
+  BehaviorSubject,
+  filter,
+  Observable,
+  Subject,
+  takeUntil,
+  tap,
+} from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import { Children } from "../../core/interface/Component"
@@ -27,20 +34,22 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
   public children: Children<ComponentNames>
 
   constructor(
-    @inject(TYPES.Game) private game: Game,
-    private stateStart: GameBoxStateStart,
-    private stateCountdown: GameBoxStateCountdown,
-    private stateQuiz: GameBoxStateQuiz,
-    private stateScore: GameBoxStateScore,
-    private stateError: GameBoxStateError,
+    @inject(TYPES.Game) private readonly _game: Game,
+    public readonly stateStart: GameBoxStateStart,
+    public readonly stateCountdown: GameBoxStateCountdown,
+    public readonly stateQuiz: GameBoxStateQuiz,
+    public readonly stateScore: GameBoxStateScore,
+    public readonly stateError: GameBoxStateError,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.children = {
       start: {
@@ -104,7 +113,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
   }
 
   private _handlerError() {
-    this.game.error
+    this._game.error
       .pipe(
         takeUntil(this.unsubscribe),
         filter((error) => error !== null),

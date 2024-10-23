@@ -6,9 +6,9 @@ import {
   BehaviorSubject,
   catchError,
   distinctUntilChanged,
-  filter,
   fromEvent,
   map,
+  Observable,
   of,
   Subject,
   takeUntil,
@@ -17,6 +17,7 @@ import {
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
+import { delegate } from "../../shared/tools/delegate"
 
 interface State {
   questions: { classSelected: string; value: number; record: number }[]
@@ -26,16 +27,18 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class SelectQuestion extends ComponentBase<any, StateImm> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
 
   constructor(
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
-    @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.Remote) private remote: Remote,
+    @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
+    @inject(TYPES.Game) private _game: Game,
+    @inject(TYPES.Remote) private _remote: Remote,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
@@ -47,7 +50,34 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
   }
 
   onInit() {
-    this.game.state
+    this._handleQuizFormat()
+  }
+
+  onMounted() {
+    this._handleSelectQuestions()
+  }
+
+  private _handleSelectQuestions() {
+    fromEvent(document, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        delegate("input-box"),
+        map((event) => {
+          return Number.parseInt(
+            (event.target as HTMLElement).dataset.question as string,
+          )
+        }),
+        tap((questionCount) => this._remote.choice(questionCount)),
+        catchError((error) => {
+          this._errorHandler.handle(error)
+          return of(error)
+        }),
+      )
+      .subscribe()
+  }
+
+  private _handleQuizFormat() {
+    this._game.state
       .pipe(
         takeUntil(this.unsubscribe),
         distinctUntilChanged((previous, current) =>
@@ -57,7 +87,9 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
           const stateInit = {
             questionValue: state.get("questionValue") as unknown as number,
             stateRaw: state.toJS() as { score: Record<string, number> },
-            questions: this.game.config.get("questions") as unknown as number[],
+            questions: this._game.config.get(
+              "questions",
+            ) as unknown as number[],
             questionsFormatted: [] as State[],
           }
 
@@ -88,25 +120,8 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
             },
           )(stateInit)
         }),
-      )
-      .subscribe()
-  }
-
-  onMounted() {
-    fromEvent(document, "click")
-      .pipe(
-        takeUntil(this.unsubscribe),
-        filter((event) => {
-          const target = event.target as HTMLElement
-          return target.classList.contains("input-box")
-        }),
-        map((event) => {
-          const target = event.target as HTMLElement
-          return Number.parseInt(target.dataset.question as string)
-        }),
-        tap((questionCount) => this.remote.choice(questionCount)),
         catchError((error) => {
-          this.errorHandler.handle(error)
+          this._errorHandler.handle(error)
           return of(error)
         }),
       )

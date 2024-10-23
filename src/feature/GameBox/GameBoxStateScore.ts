@@ -3,8 +3,11 @@ import Immutable, { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import {
   BehaviorSubject,
+  catchError,
   distinctUntilChanged,
   fromEvent,
+  Observable,
+  of,
   Subject,
   takeUntil,
   tap,
@@ -26,17 +29,19 @@ type StateImm = FromJS<State>
 
 @injectable()
 export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
-  public unsubscribe = new Subject<void>()
-  public stateSubject
-  public state
+  public unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
 
   constructor(
     private playAgain: Button,
-    @inject(TYPES.ErrorHandler) private errorHandler: ErrorHandler,
-    @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.Remote) private remote: Remote,
+    @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
+    @inject(TYPES.Game) private _game: Game,
+    @inject(TYPES.Remote) private _remote: Remote,
   ) {
     super()
+
+    this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
@@ -66,7 +71,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleResult(): void {
-    this.game.state
+    this._game.state
       .pipe(
         distinctUntilChanged((previous, current) =>
           Immutable.is(previous.get("result"), current.get("result")),
@@ -84,6 +89,10 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
             ),
           )
         }),
+        catchError((error) => {
+          this._errorHandler.handle(error)
+          return of(error)
+        }),
       )
       .subscribe()
   }
@@ -94,8 +103,12 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
         takeUntil(this.unsubscribe),
         delegate("btn--play-again"),
         tap(() => {
-          this.remote.replay()
+          this._remote.replay()
           this.props.setState("start")
+        }),
+        catchError((error) => {
+          this._errorHandler.handle(error)
+          return of(error)
         }),
       )
       .subscribe()
