@@ -1,18 +1,22 @@
 import { injectable } from "inversify"
-import type { ErrorBase, ErrorCodeCustom, ErrorMessage } from "../../interfaces"
+import type {
+  ErrorBase,
+  ErrorCode,
+  ErrorMessage,
+  ErrorStatus,
+} from "../../interfaces"
 
 @injectable()
 export class ErrorLight implements ErrorBase {
   public readonly name: string
-  public readonly message: string
-  public readonly code: string
+  public readonly message: ErrorMessage
+  public readonly code: ErrorCode
+  public readonly status: ErrorStatus
 
-  constructor(
-    message: ErrorMessage = "Something went wrong",
-    code: ErrorCodeCustom = "Unknown",
-  ) {
+  constructor(message: ErrorMessage, code: ErrorCode, status: ErrorStatus) {
     this.name = "ErrorLight"
     this.message = message
     this.code = code
+    this.status = status
   }
 }

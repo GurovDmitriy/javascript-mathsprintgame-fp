@@ -81,6 +81,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   private _handleError() {
     this._game.error
       .pipe(
+        takeUntil(this.unsubscribe),
         distinctUntilChanged((previous, current) =>
           R.equals(previous, current),
         ),

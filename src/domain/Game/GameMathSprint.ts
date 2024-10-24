@@ -18,9 +18,10 @@ import {
 import { TYPES } from "../../app/compositionRoot/types"
 import type {
   ErrorBase,
-  ErrorCodeCustom,
+  ErrorCode,
   ErrorCustom,
   ErrorMessage,
+  ErrorStatus,
   Game,
   GameConfig,
   GameEquation,
@@ -28,7 +29,6 @@ import type {
   GameScore,
   GameState,
 } from "../../interfaces"
-import { GAME_ERROR_CODE } from "./types"
 
 type GameStateImm = FromJS<GameState>
 
@@ -47,8 +47,9 @@ export class GameMathSprint implements Game {
     @inject(TYPES.GameConfig) config: GameConfig,
     @inject(TYPES.ErrorLightFactory)
     private _errorLightFactory: (
-      message?: ErrorMessage,
-      code?: ErrorCodeCustom,
+      message: ErrorMessage,
+      code: ErrorCode,
+      status: ErrorStatus,
     ) => ErrorBase,
   ) {
     this._unsubscribe = new Subject<void>()
@@ -107,13 +108,6 @@ export class GameMathSprint implements Game {
       .getValue()
       .get("questionValue") as number
 
-    const isAvailablePlay = (state: typeof stateInit) => R.gt(state, 0)
-    const ifNotAvailable = () => {
-      throw this._errorLightFactory(
-        "Question not selected",
-        GAME_ERROR_CODE.questionNotSelected,
-      )
-    }
     const updateState = () => {
       this._stateSubject.next(
         this._stateSubject.getValue().setIn(["active"], true),
@@ -123,7 +117,18 @@ export class GameMathSprint implements Game {
     R.tryCatch(
       R.pipe(
         (state) => this._handleIfExistError(state),
-        R.ifElse(isAvailablePlay, updateState, ifNotAvailable),
+        R.ifElse(
+          (state: typeof stateInit) => R.gt(state, 0),
+          updateState,
+          () => {
+            // throw this._errorLightFactory(
+            //   "Question not selected",
+            //   200,
+            //   GAME_ERROR_CODE.questionNotSelected,
+            // )
+            throw Error("Message")
+          },
+        ),
       ),
       (error) => this._errorSubject.next(error),
     )(stateInit)

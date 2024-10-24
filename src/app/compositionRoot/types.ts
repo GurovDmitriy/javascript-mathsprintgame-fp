@@ -10,6 +10,7 @@ export const TYPES = {
   ErrorReadableFactory: Symbol.for("factory.ErrorReadable"),
 
   // Services
+  ErrorGlobalHandler: Symbol.for("service.ErrorGlobalHandler"),
   ErrorHandler: Symbol.for("service.ErrorHandler"),
   Game: Symbol.for("service.Game"),
   GameConfig: Symbol.for("service.GameConfig"),

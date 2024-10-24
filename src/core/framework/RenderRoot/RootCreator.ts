@@ -5,11 +5,11 @@ import { RootRender } from "../../interface/RootRender"
 @injectable()
 export class RootCreator implements RootRender {
   render(root: Element, componentRoot: () => ComponentStateful) {
-    requestAnimationFrame(() => {
+    queueMicrotask(() => {
       const component = componentRoot()
       root.setAttribute("data-painful-idparent", component.idParent)
 
-      requestAnimationFrame(() => {
+      queueMicrotask(() => {
         component.create()
       })
     })

@@ -5,7 +5,6 @@ import { RootCreator } from "./core/framework/RenderRoot"
 import { GameBox } from "./feature/GameBox"
 
 const rootCreator = container.get<RootCreator>(RootCreator)
-
 const root = document.getElementById("root")
 
 if (root) {
