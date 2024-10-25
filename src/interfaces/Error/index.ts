@@ -1,6 +1,5 @@
 import { Observable } from "rxjs"
 
-export type ErrorType = "message" | "exception"
 export type ErrorLevel = "log" | "warning" | "error"
 export type ErrorLocation = "local" | "global"
 
@@ -24,22 +23,6 @@ export interface ErrorInfo {
   code: ErrorCode
   status: ErrorStatus
 }
-
-export const ERROR_TYPE: Record<ErrorType, ErrorType> = {
-  message: "message",
-  exception: "exception",
-} as const
-
-export const ERROR_LEVEL: Record<ErrorLevel, ErrorLevel> = {
-  log: "log",
-  warning: "warning",
-  error: "error",
-} as const
-
-export const ERROR_LOCATION: Record<ErrorLocation, ErrorLocation> = {
-  local: "local",
-  global: "global",
-} as const
 
 export type ErrorMap = Record<ErrorStatus, ErrorMessage>
 

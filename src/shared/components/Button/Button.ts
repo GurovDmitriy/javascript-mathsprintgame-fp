@@ -4,7 +4,7 @@ import { ComponentPure } from "../../../core/framework/Component"
 
 interface Props {
   content: string
-  classes: string | undefined
+  classes?: string
 }
 
 @injectable()
@@ -22,7 +22,7 @@ export class Button extends ComponentPure<Props> {
 
     return template({
       content: this.props.content || "",
-      classes: this.props.classes,
+      classes: this.props.classes || "",
     })
   }
 }

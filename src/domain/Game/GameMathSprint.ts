@@ -29,6 +29,7 @@ import type {
   GameScore,
   GameState,
 } from "../../interfaces"
+import { GAME_ERROR_CODE } from "./types"
 
 type GameStateImm = FromJS<GameState>
 
@@ -121,12 +122,11 @@ export class GameMathSprint implements Game {
           (state: typeof stateInit) => R.gt(state, 0),
           updateState,
           () => {
-            // throw this._errorLightFactory(
-            //   "Question not selected",
-            //   200,
-            //   GAME_ERROR_CODE.questionNotSelected,
-            // )
-            throw Error("Message")
+            throw this._errorLightFactory(
+              "Question not selected",
+              200,
+              GAME_ERROR_CODE.questionNotSelected,
+            )
           },
         ),
       ),

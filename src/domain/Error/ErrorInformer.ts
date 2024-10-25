@@ -1,8 +1,9 @@
 import { injectable } from "inversify"
+import * as R from "ramda"
 import { BehaviorSubject, Observable, tap } from "rxjs"
 import { RootCreator } from "../../core/framework/RenderRoot"
 import { ErrorGlobal } from "../../feature/ErrorGlobal/ErrorGlobal"
-import { ErrorCustom, ErrorGlobalHandler } from "../../interfaces"
+import { ErrorCustom, ErrorGlobalHandler, ErrorInfo } from "../../interfaces"
 
 type StateError = ErrorCustom | null
 
@@ -22,9 +23,7 @@ export class ErrorInformer implements ErrorGlobalHandler {
   }
 
   handle(error: ErrorCustom) {
-    console.log("next", error)
     this._errorSubject.next(error)
-    console.log(this._errorSubject.getValue())
   }
 
   reset() {
@@ -36,11 +35,19 @@ export class ErrorInformer implements ErrorGlobalHandler {
   private _handleErrorScreen() {
     this.error
       .pipe(
-        tap((error) => {
-          if (error !== null) {
-            const root = document.getElementById("root")
-            if (root) this._rootCreator.render(root, () => this._errorGlobal)
-          }
+        tap((error: any) => {
+          return R.ifElse(
+            (error: ErrorInfo | null) => R.not(R.equals(error, null)),
+            (error) => {
+              const root = document.getElementById("root")
+              this._errorGlobal.setProps({
+                error: error as ErrorInfo,
+                reset: this.reset,
+              })
+              if (root) this._rootCreator.render(root, () => this._errorGlobal)
+            },
+            R.T,
+          )(error)
         }),
       )
       .subscribe()

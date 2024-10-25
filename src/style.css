@@ -153,6 +153,18 @@ legend {
   padding: 0 20px;
 }
 
+.header-game-box__error-global {
+  padding: 40px;
+
+  text-align: center;
+}
+
+.header-game-box__error-global-btn {
+  padding: 40px;
+
+  text-align: center;
+}
+
 .navigation {
   display: flex;
   flex-direction: column;
