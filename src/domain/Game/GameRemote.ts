@@ -4,11 +4,7 @@ import type { Game, Remote } from "../../interfaces"
 
 @injectable()
 export class GameRemote implements Remote {
-  private _game: Game
-
-  constructor(@inject(TYPES.Game) game: Game) {
-    this._game = game
-  }
+  constructor(@inject(TYPES.Game) private _game: Game) {}
 
   choice(value: number) {
     this._game.choice(value)

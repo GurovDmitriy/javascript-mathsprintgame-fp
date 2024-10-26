@@ -26,9 +26,9 @@ export abstract class ComponentBase<
   abstract state: Observable<TState>
   public children: Children<TChildren> = {} as Children<TChildren>
 
-  constructor() {
+  protected constructor() {
     this.idParent = this._idGenerator()
-    this.idParentAttr = `data-painful-idparent="${this.idParent}"`
+    this.idParentAttr = `data-brainful-idparent="${this.idParent}"`
   }
 
   setProps(props: TProps) {
@@ -78,7 +78,7 @@ export abstract class ComponentBase<
   private _renderTemplateOnCreateInstance() {
     queueMicrotask(() => {
       const elementParent = document.querySelector(
-        `[data-painful-idparent="${this.idParent}"]`,
+        `[data-brainful-idparent="${this.idParent}"]`,
       )
 
       if (elementParent) {
@@ -100,7 +100,7 @@ export abstract class ComponentBase<
           tap(() => {
             queueMicrotask(() => {
               const elementParent = document.querySelector(
-                `[data-painful-idparent="${this.idParent}"]`,
+                `[data-brainful-idparent="${this.idParent}"]`,
               )
 
               if (elementParent) {

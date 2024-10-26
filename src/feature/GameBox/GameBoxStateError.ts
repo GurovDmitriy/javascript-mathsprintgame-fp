@@ -31,7 +31,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    private _tryAgain: Button,
+    public button: Button,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
@@ -72,7 +72,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleSetProps() {
-    this._tryAgain.setProps({
+    this.button.setProps({
       classes: "btn--play-again btn-box__btn",
       content: "Try Again",
     })
@@ -143,7 +143,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
 
     return template({
       state: this.stateSubject.getValue().toJS(),
-      tryAgain: this._tryAgain.render(),
+      tryAgain: this.button.render(),
     })
   }
 }

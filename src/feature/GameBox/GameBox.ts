@@ -41,11 +41,11 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
 
   constructor(
     @inject(TYPES.Game) private readonly _game: Game,
-    public readonly stateStart: GameBoxStateStart,
-    public readonly stateCountdown: GameBoxStateCountdown,
-    public readonly stateQuiz: GameBoxStateQuiz,
-    public readonly stateScore: GameBoxStateScore,
-    public readonly stateError: GameBoxStateError,
+    public stateStart: GameBoxStateStart,
+    public stateCountdown: GameBoxStateCountdown,
+    public stateQuiz: GameBoxStateQuiz,
+    public stateScore: GameBoxStateScore,
+    public stateError: GameBoxStateError,
   ) {
     super()
 

@@ -8,6 +8,9 @@ const container = new Container({
   skipBaseClassChecks: true,
 })
 
-container.bind<RootRender>(TYPES.ComponentStateful).to(RootCreator)
+container
+  .bind<RootRender>(TYPES.ComponentStateful)
+  .to(RootCreator)
+  .inSingletonScope()
 
 export { container }

@@ -1,5 +1,5 @@
-import { Component } from "../Component"
+import { ComponentStateful } from "../Component"
 
 export interface RootRender {
-  render(root: Element, componentRoot: () => Component): void
+  render(root: Element, componentRoot: () => ComponentStateful): void
 }

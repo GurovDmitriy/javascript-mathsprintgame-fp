@@ -34,7 +34,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    private playAgain: Button,
+    public readonly playAgain: Button,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,

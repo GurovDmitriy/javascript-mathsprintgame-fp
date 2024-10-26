@@ -1,5 +1,5 @@
 export const TYPES = {
-  ComponentStateful: Symbol.for("ComponentStateful"),
-  ComponentStateless: Symbol.for("ComponentStateless"),
-  RenderRoot: Symbol.for("RenderRoot"),
+  ComponentStateful: Symbol.for("class.ComponentStateful"),
+  ComponentStateless: Symbol.for("class.ComponentStateless"),
+  RenderRoot: Symbol.for("service.RenderRoot"),
 }

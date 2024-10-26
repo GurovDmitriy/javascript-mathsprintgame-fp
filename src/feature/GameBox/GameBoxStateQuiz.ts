@@ -39,8 +39,8 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    private btnWrong: Button,
-    private btnRight: Button,
+    public btnWrong: Button,
+    public btnRight: Button,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,

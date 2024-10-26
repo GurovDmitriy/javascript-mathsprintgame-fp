@@ -29,20 +29,21 @@ import type {
   GameScore,
   GameState,
 } from "../../interfaces"
+import { fixedNum } from "../../shared/tools/fixedNum"
 import { GAME_ERROR_CODE } from "./types"
 
 type GameStateImm = FromJS<GameState>
 
 @injectable()
 export class GameMathSprint implements Game {
-  private readonly _stateSubject: BehaviorSubject<GameStateImm>
-  private readonly _errorSubject: BehaviorSubject<ErrorCustom | null>
-  private readonly _choiceSubject: Subject<number>
-  private readonly _unsubscribe: Subject<void>
+  private _stateSubject: BehaviorSubject<GameStateImm>
+  private _errorSubject: BehaviorSubject<ErrorCustom | null>
+  private _choiceSubject: Subject<number>
+  private _unsubscribe: Subject<void>
 
-  public readonly config: FromJS<GameConfig>
-  public readonly state: Observable<GameStateImm>
-  public readonly error: Observable<ErrorCustom | null>
+  public config: FromJS<GameConfig>
+  public state: Observable<GameStateImm>
+  public error: Observable<ErrorCustom | null>
 
   constructor(
     @inject(TYPES.GameConfig) config: GameConfig,
@@ -363,7 +364,12 @@ export class GameMathSprint implements Game {
     const setTotal = (state: typeof stateInit) =>
       R.assocPath(
         ["result", "total"],
-        R.add(R.subtract(state.end, state.start), state.result.penalty),
+        fixedNum(4)(
+          R.divide(
+            R.add(R.subtract(state.end, state.start), state.result.penalty),
+            1000,
+          ),
+        ),
         state,
       )
 
@@ -386,7 +392,7 @@ export class GameMathSprint implements Game {
     return fromJS(
       R.mergeAll([
         {
-          penalty: 15000,
+          penalty: 1500,
           questions: [10, 25, 50, 99],
         } as GameConfig,
         config,
@@ -498,6 +504,10 @@ export class GameMathSprint implements Game {
       (state) => R.over(resultLens, Math.round, state),
       R.view(R.lensProp("result")),
     )(stateInit)
+  }
+
+  private _getFormatTime(value: number): number {
+    return fixedNum(4, value)
   }
 }
 

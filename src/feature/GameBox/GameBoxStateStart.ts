@@ -35,11 +35,11 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   public children: Children<"selectQuestion">
 
   constructor(
-    private selectQuestion: SelectQuestion,
-    private startRound: Button,
+    public readonly selectQuestion: SelectQuestion,
+    public readonly startRound: Button,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
-    @inject(TYPES.Game) private game: Game,
-    @inject(TYPES.Remote) private remote: Remote,
+    @inject(TYPES.Game) private _game: Game,
+    @inject(TYPES.Remote) private _remote: Remote,
   ) {
     super()
 
@@ -77,9 +77,9 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn--start"),
-        withLatestFrom(this.game.state),
+        withLatestFrom(this._game.state),
         tap(() => {
-          this.remote.start()
+          this._remote.start()
         }),
         filter((state) => {
           return R.gt(state[1].get("questionValue") as number, 0)
