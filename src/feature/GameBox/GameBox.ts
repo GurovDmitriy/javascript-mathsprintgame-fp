@@ -11,8 +11,9 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
+import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import { Children } from "../../core/interface/Component"
+import { Children, type Sweeper } from "../../core/interface"
 import type { Game } from "../../interfaces"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
 import { GameBoxStateError } from "./GameBoxStateError"
@@ -40,6 +41,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
   public children: Children<ComponentNames>
 
   constructor(
+    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.Game) private readonly _game: Game,
     public stateStart: GameBoxStateStart,
     public stateCountdown: GameBoxStateCountdown,
@@ -47,7 +49,7 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
     public stateScore: GameBoxStateScore,
     public stateError: GameBoxStateError,
   ) {
-    super()
+    super(blinder)
 
     this.unsubscribe = new Subject<void>()
 
@@ -147,7 +149,11 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
         R.pipe(
           (children: typeof this.children) => R.toPairs(children),
           (pairs) =>
-            R.filter(([name]) => R.complement(R.equals(active))(name), pairs),
+            R.filter(
+              ([name]) =>
+                R.complement(R.equals(active))(name as ComponentNames),
+              pairs,
+            ),
           R.forEach(([, value]) => value.component.destroy()),
         )(this.children)
       },

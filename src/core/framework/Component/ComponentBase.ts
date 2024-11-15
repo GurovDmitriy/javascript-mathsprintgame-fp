@@ -1,16 +1,30 @@
-import Immutable from "immutable"
+import { is } from "immutable"
+import { inject, injectable } from "inversify"
+import * as R from "ramda"
+import { complement } from "ramda"
 import {
   BehaviorSubject,
-  debounceTime,
   distinctUntilChanged,
   Observable,
   Subject,
   takeUntil,
   tap,
 } from "rxjs"
-import { Children, ComponentStateful } from "../../interface/Component"
+import { TYPES } from "../../compositionRoot/types"
+import type { Children, ComponentStateful, Sweeper } from "../../interface"
 
-export abstract class ComponentBase<
+// TODO: stateInit - stateClear sweep
+// TODO: bind - unbind container
+// TODO: crate - destroy control
+// TODO: children control
+// TODO: lifecycle create init
+// TODO: update state call sweep
+// TODO: update state call sweep
+// TODO: keep alive
+// TODO: abstract class
+// TODO: no container deps
+@injectable()
+export class ComponentBase<
   TProps = any,
   TState = any,
   TChildren extends string = any,
@@ -21,14 +35,36 @@ export abstract class ComponentBase<
 
   public props: TProps = {} as TProps
 
-  abstract unsubscribe: Subject<void>
-  abstract stateSubject: BehaviorSubject<TState>
-  abstract state: Observable<TState>
+  public unsubscribe: Subject<void>
+  private _unsubscribe: Subject<void>
+  public stateSubject: BehaviorSubject<TState>
+  public state: Observable<TState>
   public children: Children<TChildren> = {} as Children<TChildren>
 
-  protected constructor() {
+  constructor(@inject(TYPES.Sweeper) private _blinder: Sweeper) {
     this.idParent = this._idGenerator()
     this.idParentAttr = `data-brainful-idparent="${this.idParent}"`
+
+    this.unsubscribe = new Subject<void>()
+    this._unsubscribe = new Subject<void>()
+    this.stateSubject = new BehaviorSubject<TState>({} as TState)
+    this.state = this.stateSubject.asObservable()
+
+    if (this._blinder) {
+      this._blinder.state
+        .pipe(
+          takeUntil(this._unsubscribe),
+          tap(() => {
+            const re = document.querySelector(
+              `[data-brainful-idparent="${this.idParent}"]`,
+            )
+            if (!re) {
+              this._blinder.sweep(this)
+            }
+          }),
+        )
+        .subscribe()
+    }
   }
 
   setProps(props: TProps) {
@@ -36,7 +72,25 @@ export abstract class ComponentBase<
   }
 
   create(): void {
-    this.destroy()
+    this._create()
+  }
+
+  destroy(): void {
+    this._destroy()
+  }
+
+  render() {
+    return ""
+  }
+
+  onCreate() {}
+  onInit() {}
+  onMounted() {}
+  onUpdated() {}
+  onDestroy() {}
+
+  private _create() {
+    this._destroy()
 
     queueMicrotask(() => {
       this._init()
@@ -45,48 +99,75 @@ export abstract class ComponentBase<
     this._renderTemplateOnCreateInstance()
     this._renderTemplateAfterStateUpdated()
 
-    if (typeof this.onCreate === "function") {
-      this.onCreate()
-    }
+    this.onCreate()
   }
 
-  destroy(): void {
+  private _destroy() {
     queueMicrotask(() => {
       this.unsubscribe.next()
       this.unsubscribe.complete()
       this.unsubscribe = new Subject<void>()
 
-      if (typeof this.onDestroy === "function") {
-        requestAnimationFrame(() => {
-          this.onDestroy()
-        })
+      this._unsubscribe.next()
+      this._unsubscribe.complete()
+      this._unsubscribe = new Subject<void>()
+
+      if (this.children) {
+        R.forEach((c) => {
+          const child = c as { value: string; component: ComponentStateful }
+          child.component.destroy()
+        }, R.values(this.children))
       }
+
+      requestAnimationFrame(() => {
+        this.onDestroy()
+      })
     })
   }
 
-  onInit() {}
-  onCreate() {}
-  onDestroy() {}
-  onMounted() {}
-  onUpdated() {}
-  abstract render(): string
+  private _init() {
+    R.ifElse(
+      () => R.and(Boolean, complement(R.isEmpty))(this.children),
+      () => {
+        R.forEach((c) => {
+          const child = c as { value: string; component: ComponentStateful }
+          child.component.create()
+        }, R.values(this.children))
+      },
+      R.T,
+    )()
 
-  private _idGenerator(): string {
-    return crypto.randomUUID()
+    this.onInit()
+  }
+
+  private _mount() {
+    this.onMounted()
+  }
+
+  private _update() {
+    this.onUpdated()
+  }
+
+  private _render() {
+    return this.render()
   }
 
   private _renderTemplateOnCreateInstance() {
     queueMicrotask(() => {
-      const elementParent = document.querySelector(
-        `[data-brainful-idparent="${this.idParent}"]`,
-      )
-
-      if (elementParent) {
-        elementParent.innerHTML = this.render()
-        requestAnimationFrame(() => {
-          this._mount()
-        })
-      }
+      R.pipe(
+        () =>
+          document.querySelector(`[data-brainful-idparent="${this.idParent}"]`),
+        R.ifElse(
+          (elementParent: Element | null) => Boolean(elementParent),
+          (elementParent) => {
+            ;(elementParent as Element).innerHTML = this.render()
+            requestAnimationFrame(() => {
+              this._mount()
+            })
+          },
+          R.T,
+        ),
+      )()
     })
   }
 
@@ -94,21 +175,30 @@ export abstract class ComponentBase<
     queueMicrotask(() => {
       this.state
         .pipe(
-          takeUntil(this.unsubscribe),
-          distinctUntilChanged((prev, curr) => Immutable.is(prev, curr)),
-          debounceTime(80),
+          takeUntil(this._unsubscribe),
+          distinctUntilChanged((prev: any, curr: any) => is(prev, curr)),
           tap(() => {
             queueMicrotask(() => {
-              const elementParent = document.querySelector(
-                `[data-brainful-idparent="${this.idParent}"]`,
-              )
+              R.pipe(
+                () =>
+                  document.querySelector(
+                    `[data-brainful-idparent="${this.idParent}"]`,
+                  ),
+                R.ifElse(
+                  (elementParent: Element | null) => Boolean(elementParent),
+                  (elementParent) => {
+                    ;(elementParent as Element).innerHTML = this._render()
+                    requestAnimationFrame(() => {
+                      this._update()
 
-              if (elementParent) {
-                elementParent.innerHTML = this.render()
-                requestAnimationFrame(() => {
-                  this._update()
-                })
-              }
+                      if (this._blinder?.update) {
+                        this._blinder.update()
+                      }
+                    })
+                  },
+                  R.T,
+                ),
+              )()
             })
           }),
         )
@@ -116,28 +206,7 @@ export abstract class ComponentBase<
     })
   }
 
-  private _init() {
-    if (this.children && Object.values(this.children).length) {
-      Object.values(this.children).forEach((c) => {
-        const child = c as { value: string; component: ComponentStateful }
-        child.component.create()
-      })
-    }
-
-    if (typeof this.onInit === "function") {
-      this.onInit()
-    }
-  }
-
-  private _mount() {
-    if (typeof this.onMounted === "function") {
-      this.onMounted()
-    }
-  }
-
-  private _update() {
-    if (typeof this.onUpdated === "function") {
-      this.onUpdated()
-    }
+  private _idGenerator(): string {
+    return crypto.randomUUID()
   }
 }

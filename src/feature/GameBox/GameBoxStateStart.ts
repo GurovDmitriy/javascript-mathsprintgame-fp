@@ -15,7 +15,9 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
+import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
+import type { Sweeper } from "../../core/interface"
 import { Children } from "../../core/interface/Component"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
@@ -37,11 +39,12 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   constructor(
     public readonly selectQuestion: SelectQuestion,
     public readonly startRound: Button,
+    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
   ) {
-    super()
+    super(blinder)
 
     this.unsubscribe = new Subject<void>()
 

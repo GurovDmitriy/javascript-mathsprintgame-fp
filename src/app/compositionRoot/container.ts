@@ -25,61 +25,54 @@ import { ErrorConfiguration, GameConfiguration } from "../configuration"
 import { TYPES } from "./types"
 
 // Settings IoC
-const container = new Container({
+const c = new Container({
   autoBindInjectable: true,
   skipBaseClassChecks: true,
 })
 
-container.parent = containerFramework
-
 // Base
-container.bind<ErrorBase>(TYPES.ErrorHeavy).to(ErrorHeavy)
-container.bind<ErrorBase>(TYPES.ErrorLight).to(ErrorLight)
-container.bind<ErrorInfo>(TYPES.ErrorReadable).to(ErrorReadable)
+c.bind<ErrorBase>(TYPES.ErrorHeavy).to(ErrorHeavy)
+c.bind<ErrorBase>(TYPES.ErrorLight).to(ErrorLight)
+c.bind<ErrorInfo>(TYPES.ErrorReadable).to(ErrorReadable)
 
 // Factory
-container
-  .bind<interfaces.Factory<ErrorBase>>(TYPES.ErrorLightFactory)
-  .toFactory<ErrorBase, [ErrorMessage, ErrorCode, ErrorStatus]>(() => {
-    return (message, code, status) => new ErrorLight(message, code, status)
-  })
+c.bind<interfaces.Factory<ErrorBase>>(TYPES.ErrorLightFactory).toFactory<
+  ErrorBase,
+  [ErrorMessage, ErrorCode, ErrorStatus]
+>(() => {
+  return (message, code, status) => new ErrorLight(message, code, status)
+})
 
-container
-  .bind<interfaces.Factory<ErrorBase>>(TYPES.ErrorHeavyFactory)
-  .toFactory<ErrorBase, [ErrorMessage, ErrorCode, ErrorStatus]>(() => {
-    return (message, code, status) => new ErrorHeavy(message, code, status)
-  })
+c.bind<interfaces.Factory<ErrorBase>>(TYPES.ErrorHeavyFactory).toFactory<
+  ErrorBase,
+  [ErrorMessage, ErrorCode, ErrorStatus]
+>(() => {
+  return (message, code, status) => new ErrorHeavy(message, code, status)
+})
 
-container
-  .bind<interfaces.Factory<ErrorInfo>>(TYPES.ErrorReadableFactory)
-  .toFactory<ErrorInfo, [ErrorMessage, ErrorCode, ErrorStatus]>(() => {
-    return (message, code, status) => new ErrorReadable(message, code, status)
-  })
+c.bind<interfaces.Factory<ErrorInfo>>(TYPES.ErrorReadableFactory).toFactory<
+  ErrorInfo,
+  [ErrorMessage, ErrorCode, ErrorStatus]
+>(() => {
+  return (message, code, status) => new ErrorReadable(message, code, status)
+})
 
 // configuration
-container
-  .bind<ErrorConfig>(TYPES.ErrorConfig)
-  .to(ErrorConfiguration)
-  .inSingletonScope()
+c.bind<ErrorConfig>(TYPES.ErrorConfig).to(ErrorConfiguration).inSingletonScope()
 
-container
-  .bind<GameConfig>(TYPES.GameConfig)
-  .to(GameConfiguration)
-  .inSingletonScope()
+c.bind<GameConfig>(TYPES.GameConfig).to(GameConfiguration).inSingletonScope()
 
 // error handler
-container
-  .bind<ErrorGlobalHandler>(TYPES.ErrorGlobalHandler)
+c.bind<ErrorGlobalHandler>(TYPES.ErrorGlobalHandler)
   .to(ErrorInformer)
   .inSingletonScope()
 
-container
-  .bind<ErrorHandler>(TYPES.ErrorHandler)
-  .to(ErrorService)
-  .inSingletonScope()
+c.bind<ErrorHandler>(TYPES.ErrorHandler).to(ErrorService).inSingletonScope()
 
 // game
-container.bind<Game>(TYPES.Game).to(GameMathSprint).inSingletonScope()
-container.bind<Remote>(TYPES.Remote).to(GameRemote).inSingletonScope()
+c.bind<Game>(TYPES.Game).to(GameMathSprint).inSingletonScope()
+c.bind<Remote>(TYPES.Remote).to(GameRemote).inSingletonScope()
 
-export { container }
+containerFramework.parent = c
+
+export { containerFramework as container }

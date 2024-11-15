@@ -13,7 +13,9 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
+import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
+import type { Sweeper } from "../../core/interface"
 import type { ErrorHandler, Game, GameResult, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { delegate } from "../../shared/tools/delegate"
@@ -34,12 +36,13 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    public readonly playAgain: Button,
+    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
+    public readonly playAgain: Button,
   ) {
-    super()
+    super(blinder)
 
     this.unsubscribe = new Subject<void>()
 

@@ -1,15 +1,17 @@
-import { ComponentStateless } from "../../interface/Component"
+import { injectable } from "inversify"
+import type { ComponentStateless } from "../../interface"
 
-export abstract class ComponentPure<TProps = any>
-  implements ComponentStateless<TProps>
-{
+@injectable()
+export class ComponentPure<TProps = any> implements ComponentStateless<TProps> {
   public props: TProps = {} as TProps
 
-  protected constructor() {}
+  constructor() {}
 
   setProps(props: TProps) {
     this.props = props
   }
 
-  abstract render(): string
+  render() {
+    return ""
+  }
 }

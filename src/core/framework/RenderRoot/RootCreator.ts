@@ -1,6 +1,5 @@
 import { injectable } from "inversify"
-import { ComponentStateful } from "../../interface/Component"
-import { RootRender } from "../../interface/RootRender"
+import type { ComponentStateful, RootRender } from "../../interface"
 
 @injectable()
 export class RootCreator implements RootRender {
@@ -9,7 +8,7 @@ export class RootCreator implements RootRender {
       const component = componentRoot()
       root.setAttribute("data-brainful-idparent", component.idParent)
 
-      queueMicrotask(() => {
+      requestAnimationFrame(() => {
         component.create()
       })
     })
