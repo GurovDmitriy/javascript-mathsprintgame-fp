@@ -15,10 +15,8 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
-import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { Sweeper } from "../../core/interface"
-import { Children } from "../../core/interface/Component"
+import { Children } from "../../core/interface"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { delegate } from "../../shared/tools/delegate"
@@ -37,14 +35,13 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   public children: Children<"selectQuestion">
 
   constructor(
-    public readonly selectQuestion: SelectQuestion,
-    public readonly startRound: Button,
-    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
+    public readonly selectQuestion: SelectQuestion,
+    public readonly startRound: Button,
   ) {
-    super(blinder)
+    super()
 
     this.unsubscribe = new Subject<void>()
 
@@ -57,15 +54,18 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
 
     this.stateSubject = new BehaviorSubject<StateImm>(fromJS({}))
 
-    this.state = this.stateSubject.asObservable()
-  }
-
-  onInit() {
     this._handleSetProps()
+
+    this.state = this.stateSubject.asObservable()
   }
 
   onMounted() {
     this._handleStartGame()
+  }
+
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
   private _handleSetProps(): void {
@@ -126,7 +126,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
     `)
 
     return template({
-      idParentAttrSelectQuestion: this.selectQuestion.idParentAttr,
+      idParentAttrSelectQuestion: this.selectQuestion.parentAttrId,
       startRound: this.startRound.render(),
     })
   }

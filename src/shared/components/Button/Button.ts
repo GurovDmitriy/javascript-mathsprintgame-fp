@@ -11,6 +11,8 @@ interface Props {
 export class Button extends ComponentPure<Props> {
   constructor() {
     super()
+
+    console.log("constructor button")
   }
 
   render() {

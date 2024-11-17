@@ -16,6 +16,7 @@ import {
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
+import { Children } from "../../core/interface"
 import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { delegate } from "../../shared/tools/delegate"
 
@@ -30,6 +31,7 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<StateImm>
   public state: Observable<StateImm>
+  public children: Children<{}> = {}
 
   constructor(
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
@@ -47,14 +49,18 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
     )
 
     this.state = this.stateSubject.asObservable()
-  }
-
-  onInit() {
     this._handleQuizFormat()
+
+    console.log("constructor", this)
   }
 
   onMounted() {
     this._handleSelectQuestions()
+  }
+
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
   private _handleSelectQuestions() {

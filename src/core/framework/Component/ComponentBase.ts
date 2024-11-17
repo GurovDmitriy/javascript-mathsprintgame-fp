@@ -1,7 +1,5 @@
 import { is } from "immutable"
-import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { complement } from "ramda"
 import {
   BehaviorSubject,
   distinctUntilChanged,
@@ -10,159 +8,125 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
+import { container } from "../../compositionRoot/container"
 import { TYPES } from "../../compositionRoot/types"
-import type { Children, ComponentStateful, Sweeper } from "../../interface"
+import type { ComponentStateful } from "../../interface"
+import { Sweeper } from "./Sweeper"
+
+// TODO: lifecycle hooks order!!!
 
 // TODO: stateInit - stateClear sweep
+// TODO: check how state init is create on bind and unbind log it
+// TODO: keep alive as blinder
+
+// TODO: sweeper as cleaner
 // TODO: bind - unbind container
+// TODO: update state call sweep
+// TODO: update state call sweep
+// TODO: async destroy/unbind
+
 // TODO: crate - destroy control
 // TODO: children control
 // TODO: lifecycle create init
-// TODO: update state call sweep
-// TODO: update state call sweep
-// TODO: keep alive
+
 // TODO: abstract class
 // TODO: no container deps
-@injectable()
-export class ComponentBase<
-  TProps = any,
-  TState = any,
-  TChildren extends string = any,
-> implements ComponentStateful<TProps, TState, TChildren>
+
+// TODO: merge streams for state & children
+export abstract class ComponentBase<TProps = any, TState = any, TChildren = any>
+  implements ComponentStateful<TProps, TState, TChildren>
 {
-  public readonly idParent: string
-  public readonly idParentAttr: string
+  private _unsubscribe: Subject<void> = new Subject<void>()
+
+  public parentId: string
+  public parentAttr: string
+  public parentAttrId: string
 
   public props: TProps = {} as TProps
+  public children: TChildren
 
-  public unsubscribe: Subject<void>
-  private _unsubscribe: Subject<void>
-  public stateSubject: BehaviorSubject<TState>
-  public state: Observable<TState>
-  public children: Children<TChildren> = {} as Children<TChildren>
+  abstract unsubscribe: Subject<void>
+  abstract stateSubject: BehaviorSubject<TState>
+  abstract state: Observable<TState>
 
-  constructor(@inject(TYPES.Sweeper) private _blinder: Sweeper) {
-    this.idParent = this._idGenerator()
-    this.idParentAttr = `data-brainful-idparent="${this.idParent}"`
+  private _sweeper = container.get<Sweeper>(TYPES.Sweeper)
 
-    this.unsubscribe = new Subject<void>()
-    this._unsubscribe = new Subject<void>()
-    this.stateSubject = new BehaviorSubject<TState>({} as TState)
-    this.state = this.stateSubject.asObservable()
+  protected constructor() {
+    const attrGenerated = this._attrGenerator()
+    this.parentId = attrGenerated.id
+    this.parentAttr = attrGenerated.attr
+    this.parentAttrId = attrGenerated.value
 
-    if (this._blinder) {
-      this._blinder.state
-        .pipe(
-          takeUntil(this._unsubscribe),
-          tap(() => {
-            const re = document.querySelector(
-              `[data-brainful-idparent="${this.idParent}"]`,
-            )
-            if (!re) {
-              this._blinder.sweep(this)
-            }
-          }),
-        )
-        .subscribe()
-    }
+    this.props = {} as TProps
+    this.children = {} as TChildren
+
+    this._sweeper.state
+      .pipe(
+        takeUntil(this._unsubscribe),
+        tap(() => {
+          if (this._elementFinder() === null) {
+            // TODO: check sbs component
+            // TODO: check sbs local
+            // TODO: check memory
+            // TODO: check and remove all this links - state and sbs and children
+            this.destroy()
+            console.log("call to check render")
+          }
+        }),
+      )
+      .subscribe()
+
+    this._mountComponentAfterStateUpdate()
   }
 
-  setProps(props: TProps) {
+  setProps(props: TProps): void {
     this.props = props
   }
 
-  create(): void {
-    this._create()
+  mount(): void {
+    this._mountComponent()
   }
+
+  // deprecate
+  create(): void {}
 
   destroy(): void {
-    this._destroy()
-  }
-
-  render() {
-    return ""
-  }
-
-  onCreate() {}
-  onInit() {}
-  onMounted() {}
-  onUpdated() {}
-  onDestroy() {}
-
-  private _create() {
-    this._destroy()
-
     queueMicrotask(() => {
-      this._init()
+      this.onDestroy()
     })
 
-    this._renderTemplateOnCreateInstance()
-    this._renderTemplateAfterStateUpdated()
-
-    this.onCreate()
-  }
-
-  private _destroy() {
     queueMicrotask(() => {
-      this.unsubscribe.next()
-      this.unsubscribe.complete()
-      this.unsubscribe = new Subject<void>()
-
+      this._destroyChildren()
       this._unsubscribe.next()
       this._unsubscribe.complete()
-      this._unsubscribe = new Subject<void>()
-
-      if (this.children) {
-        R.forEach((c) => {
-          const child = c as { value: string; component: ComponentStateful }
-          child.component.destroy()
-        }, R.values(this.children))
-      }
-
-      requestAnimationFrame(() => {
-        this.onDestroy()
-      })
     })
   }
 
-  private _init() {
-    R.ifElse(
-      () => R.and(Boolean, complement(R.isEmpty))(this.children),
-      () => {
-        R.forEach((c) => {
-          const child = c as { value: string; component: ComponentStateful }
-          child.component.create()
-        }, R.values(this.children))
-      },
-      R.T,
-    )()
+  abstract render(): string
 
-    this.onInit()
-  }
+  // deprecate
+  onCreate(): void {}
+  // deprecate
+  onInit(): void {}
 
-  private _mount() {
-    this.onMounted()
-  }
+  onMounted(): void {}
+  onUpdated(): void {}
+  onDestroy(): void {}
 
-  private _update() {
-    this.onUpdated()
-  }
-
-  private _render() {
-    return this.render()
-  }
-
-  private _renderTemplateOnCreateInstance() {
+  private _mountComponent(): void {
     queueMicrotask(() => {
       R.pipe(
-        () =>
-          document.querySelector(`[data-brainful-idparent="${this.idParent}"]`),
+        () => this._elementFinder(),
         R.ifElse(
           (elementParent: Element | null) => Boolean(elementParent),
           (elementParent) => {
             ;(elementParent as Element).innerHTML = this.render()
             requestAnimationFrame(() => {
-              this._mount()
+              this.onMounted()
+
+              queueMicrotask(() => {
+                this._mountChildren()
+              })
             })
           },
           R.T,
@@ -171,7 +135,7 @@ export class ComponentBase<
     })
   }
 
-  private _renderTemplateAfterStateUpdated() {
+  private _mountComponentAfterStateUpdate(): void {
     queueMicrotask(() => {
       this.state
         .pipe(
@@ -180,20 +144,16 @@ export class ComponentBase<
           tap(() => {
             queueMicrotask(() => {
               R.pipe(
-                () =>
-                  document.querySelector(
-                    `[data-brainful-idparent="${this.idParent}"]`,
-                  ),
+                () => this._elementFinder(),
                 R.ifElse(
                   (elementParent: Element | null) => Boolean(elementParent),
                   (elementParent) => {
-                    ;(elementParent as Element).innerHTML = this._render()
-                    requestAnimationFrame(() => {
-                      this._update()
+                    ;(elementParent as Element).innerHTML = this.render()
 
-                      if (this._blinder?.update) {
-                        this._blinder.update()
-                      }
+                    // TODO: replate innerHtml
+
+                    requestAnimationFrame(() => {
+                      this.onUpdated()
                     })
                   },
                   R.T,
@@ -206,7 +166,65 @@ export class ComponentBase<
     })
   }
 
-  private _idGenerator(): string {
-    return crypto.randomUUID()
+  // private _initCleanerNotifier(): void {
+  //   this._cleaner.stream
+  //     .pipe(
+  //       takeUntil(this._unsubscribe),
+  //       tap(() => {
+  //         const element = this._helperElementFinder()
+  //         if (!element) {
+  //           this._cleaner.sweep(() => this as any)
+  //         }
+  //       }),
+  //     )
+  //     .subscribe()
+  // }
+
+  private _mountChildren(): void {
+    // queueMicrotask(() => {
+    //   R.ifElse(
+    //     () => R.and(Boolean, complement(R.isEmpty))(this.children),
+    //     () => {
+    //       R.forEach((c) => {
+    //         const child = c as { value: string; component: ComponentStateful }
+    //         child.component.mount()
+    //       }, R.values(this.children))
+    //     },
+    //     R.T,
+    //   )()
+    // })
+  }
+
+  private _destroyChildren(): void {
+    // R.ifElse(
+    //   () => R.and(Boolean, complement(R.isEmpty))(this.children),
+    //   () => {
+    //     R.forEach((c) => {
+    //       const child = c as { value: string; component: ComponentStateful }
+    //       child.component.destroy()
+    //     }, R.values(this.children))
+    //   },
+    //   R.T,
+    // )()
+  }
+
+  private _elementFinder(): Element | null {
+    if (document) {
+      return document.querySelector(`[${this.parentAttrId}]`)
+    } else {
+      return null
+    }
+  }
+
+  private _attrGenerator(): { attr: string; id: string; value: string } {
+    const attr = "data-brainful-parent-id"
+    const id = `brainful-${crypto.randomUUID()}`
+    const value = `${attr}=${id}`
+
+    return {
+      attr,
+      id,
+      value,
+    }
   }
 }

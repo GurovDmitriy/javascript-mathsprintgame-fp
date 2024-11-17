@@ -4,7 +4,7 @@ const tseslint = require("typescript-eslint")
 
 module.exports = tseslint.config(
   {
-    ignores: [],
+    ignores: ["dist", ".parcel-cache"],
   },
   {
     files: ["**/*.ts"],

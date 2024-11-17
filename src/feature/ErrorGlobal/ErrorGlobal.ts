@@ -36,7 +36,7 @@ export class ErrorGlobal extends ComponentBase<Props, StateImm> {
     this.state = this.stateSubject.asObservable()
   }
 
-  onInit() {
+  onCreate() {
     this._setProps()
     this._reload()
   }

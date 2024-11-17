@@ -12,9 +12,7 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
-import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { Sweeper } from "../../core/interface"
 import type { ErrorHandler, ErrorInfo, Game, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { delegate } from "../../shared/tools/delegate"
@@ -33,13 +31,12 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
     public button: Button,
   ) {
-    super(blinder)
+    super()
 
     this.unsubscribe = new Subject<void>()
 
@@ -50,15 +47,20 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
     )
 
     this.state = this.stateSubject.asObservable()
-  }
 
-  onInit() {
     this._handleSetProps()
     this._handleError()
+
+    console.log("constructor", this)
   }
 
   onMounted() {
     this._handleToggleState()
+  }
+
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
   private _handleToggleState() {

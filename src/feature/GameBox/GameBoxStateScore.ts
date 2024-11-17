@@ -13,9 +13,7 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
-import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { Sweeper } from "../../core/interface"
 import type { ErrorHandler, Game, GameResult, Remote } from "../../interfaces"
 import { Button } from "../../shared/components/Button"
 import { delegate } from "../../shared/tools/delegate"
@@ -36,13 +34,12 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   public state: Observable<StateImm>
 
   constructor(
-    @inject(T.Sweeper) blinder: Sweeper,
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
     public readonly playAgain: Button,
   ) {
-    super(blinder)
+    super()
 
     this.unsubscribe = new Subject<void>()
 
@@ -55,15 +52,20 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
     )
 
     this.state = this.stateSubject.asObservable()
-  }
 
-  onInit(): void {
+    console.log("constructor", this)
+
     this._handleSetProps()
-    this._handleResult()
   }
 
   onMounted(): void {
+    // this._handleResult()
     this._handleReplay()
+  }
+
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
   private _handleSetProps(): void {
@@ -80,6 +82,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
           Immutable.is(previous.get("result"), current.get("result")),
         ),
         tap((state) => {
+          console.log("score")
           const resultRaw = state.toJS().result as GameResult
 
           this.stateSubject.next(

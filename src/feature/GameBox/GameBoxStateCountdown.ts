@@ -13,9 +13,7 @@ import {
   timer,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types"
-import { TYPES as T } from "../../core/compositionRoot/types"
 import { ComponentBase } from "../../core/framework/Component"
-import type { Sweeper } from "../../core/interface"
 import type { Remote } from "../../interfaces"
 import { GameBoxContext } from "./types"
 
@@ -34,12 +32,8 @@ export class GameBoxStateCountdown extends ComponentBase<
   public stateSubject: BehaviorSubject<StateImm>
   public state: Observable<StateImm>
 
-  constructor(
-    @inject(T.Sweeper) blinder: Sweeper,
-    @inject(TYPES.Remote) private _remote: Remote,
-  ) {
-    super(blinder)
-
+  constructor(@inject(TYPES.Remote) private _remote: Remote) {
+    super()
     this.unsubscribe = new Subject<void>()
 
     this.stateSubject = new BehaviorSubject<StateImm>(
@@ -49,13 +43,21 @@ export class GameBoxStateCountdown extends ComponentBase<
     )
 
     this.state = this.stateSubject.asObservable()
+
+    console.log("constructor", this)
   }
 
   getState() {
     return this.stateSubject.getValue()
   }
 
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
+  }
+
   onMounted() {
+    console.log("mout timer")
     this._handleTimer()
   }
 

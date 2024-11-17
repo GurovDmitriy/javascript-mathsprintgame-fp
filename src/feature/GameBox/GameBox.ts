@@ -1,117 +1,145 @@
 import { compile } from "handlebars"
-import { fromJS, FromJS } from "immutable"
+import { fromJS, List, Map } from "immutable"
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
 import {
   BehaviorSubject,
   filter,
+  fromEvent,
   Observable,
   Subject,
   takeUntil,
   tap,
 } from "rxjs"
+import { containerApp } from "../../app/compositionRoot/container"
 import { TYPES } from "../../app/compositionRoot/types"
 import { TYPES as T } from "../../core/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import { Children, type Sweeper } from "../../core/interface"
+import { ComponentBase, Sweeper } from "../../core/framework/Component"
 import type { Game } from "../../interfaces"
-import { GameBoxStateCountdown } from "./GameBoxStateCountdown"
-import { GameBoxStateError } from "./GameBoxStateError"
-import { GameBoxStateQuiz } from "./GameBoxStateQuiz"
-import { GameBoxStateScore } from "./GameBoxStateScore"
-import { GameBoxStateStart } from "./GameBoxStateStart"
-import { ComponentNames, GameBoxContext } from "./types"
+import { Button } from "../../shared/components/Button"
+import { ButtonHeavy } from "../../shared/components/ButtonHeavy"
+import { delegate } from "../../shared/tools/delegate"
+import { ComponentNames } from "./types"
 
-interface State {
-  active: ComponentNames
-  start: boolean
-  countdown: boolean
-  quiz: boolean
-  score: boolean
-  error: boolean
-}
+// interface State {
+//   active: string
+// }
 
-type StateImm = FromJS<State>
+// type StateImm = FromJS<State>
 
 @injectable()
-export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
+export class GameBox extends ComponentBase<any, any> {
   public unsubscribe: Subject<void>
-  public stateSubject: BehaviorSubject<StateImm>
-  public state: Observable<StateImm>
-  public children: Children<ComponentNames>
+  public stateSubject: BehaviorSubject<any>
+  public state: Observable<any>
+
+  //**************
+  // Sweeper Children
+  //**************
+  // save components only in this weakMap
+  // read only idAttr for map and template
+  // control keys week
+  // mount destroy unbind from container
+  // trigger state or children as Observer?
+  // meta for create classes with container
+
+  // public childrenMeta = {
+  //   start: GameBoxStateStart,
+  //   countdown: GameBoxStateCountdown,
+  //   quiz: GameBoxStateQuiz,
+  //   score: GameBoxStateScore,
+  //   error: GameBoxStateError,
+  // }
+
+  // public childrenSubject = new BehaviorSubject<any>(
+  //   fromJS({
+  //     add: {
+  //       component: containerApp.get(Button),
+  //       props: () => ({ content: "add", classes: "btn-add" }),
+  //     },
+  //     remove: {
+  //       component: containerApp.get(Button),
+  //       props: () => ({ content: "remove", classes: "btn-remove" }),
+  //     },
+  //     list: [
+  //       {
+  //         component: containerApp.get(Button),
+  //         props: () => ({ content: "button 1" }),
+  //       },
+  //       {
+  //         component: containerApp.get(Button),
+  //         props: () => ({ content: "button 2" }),
+  //       },
+  //     ],
+  //   }),
+  // )
+  // public children = this.childrenSubject.asObservable()
+  //
+  // public childrenMapSubject = new BehaviorSubject<any>({})
+  // public childrenMap = this.childrenMapSubject.asObservable()
 
   constructor(
-    @inject(T.Sweeper) blinder: Sweeper,
+    @inject(T.Sweeper) private readonly _sweeper: Sweeper,
     @inject(TYPES.Game) private readonly _game: Game,
-    public stateStart: GameBoxStateStart,
-    public stateCountdown: GameBoxStateCountdown,
-    public stateQuiz: GameBoxStateQuiz,
-    public stateScore: GameBoxStateScore,
-    public stateError: GameBoxStateError,
   ) {
-    super(blinder)
+    super()
 
     this.unsubscribe = new Subject<void>()
-
-    this.children = {
-      start: {
-        value: "start",
-        component: this.stateStart,
-      },
-      countdown: {
-        value: "countdown",
-        component: this.stateCountdown,
-      },
-      quiz: {
-        value: "quiz",
-        component: this.stateQuiz,
-      },
-      score: {
-        value: "score",
-        component: this.stateScore,
-      },
-      error: {
-        value: "error",
-        component: this.stateError,
-      },
-    }
-
-    this.stateSubject = new BehaviorSubject<StateImm>(
+    this.stateSubject = new BehaviorSubject<any>(
       fromJS({
-        active: "start",
-        start: true,
-        countdown: false,
-        quiz: false,
-        score: false,
-        error: false,
-      } satisfies State),
+        add: {
+          component: containerApp.get(Button),
+          props: () => ({ content: "add", classes: "btn-add" }),
+        },
+        remove: {
+          component: containerApp.get(Button),
+          props: () => ({ content: "remove", classes: "btn-remove" }),
+        },
+        list: [
+          {
+            component: containerApp.get(ButtonHeavy),
+            props: () => ({ content: "button 1" }),
+          },
+          {
+            component: containerApp.get(ButtonHeavy),
+            props: () => ({ content: "button 2" }),
+          },
+        ],
+      }),
     )
-
     this.state = this.stateSubject.asObservable()
+    this._handlerError()
   }
 
-  onInit() {
-    this._handlerError()
-    this._handlerSetPropsChildren()
+  onMounted() {
+    this._handleAdd()
+    this._handleRemove()
+  }
+
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
   onUpdated() {
-    this._handlerRecreateChildren()
+    this.stateSubject.getValue().forEach((v) => {
+      if (Map.isMap(v)) {
+        v.get("component").setProps(v.get("props")())
+        v.get("component").mount()
+      } else if (List.isList(v)) {
+        v.forEach((l) => {
+          l.get("component").setProps(l.get("props")())
+          l.get("component").mount()
+        })
+      }
+    })
+
+    this._sweeper.sweep()
   }
 
   setState(name: ComponentNames) {
-    this.stateSubject.next(
-      this.stateSubject.getValue().merge(
-        fromJS({
-          active: name,
-          start: name === "start",
-          countdown: name === "countdown",
-          quiz: name === "quiz",
-          score: name === "score",
-          error: name === "error",
-        }),
-      ),
-    )
+    console.log(name)
+    // this.stateSubject.next(this.stateSubject.getValue().set("active", name))
   }
 
   private _handlerError() {
@@ -130,70 +158,62 @@ export class GameBox extends ComponentBase<any, StateImm, ComponentNames> {
       .subscribe()
   }
 
-  private _handlerSetPropsChildren() {
-    const context: GameBoxContext = {
-      setState: this.setState.bind(this),
-    }
-
-    R.forEach((c) => c.component.setProps(context), R.values(this.children))
+  private _handleAdd() {
+    fromEvent(document, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        delegate("btn-add"),
+        tap(() =>
+          this.stateSubject.next(
+            this.stateSubject.getValue().setIn(
+              ["list"],
+              this.stateSubject
+                .getValue()
+                .get("list")
+                .push(
+                  fromJS({
+                    component: containerApp.get(ButtonHeavy),
+                    props: () => ({ content: "New button" }),
+                  }),
+                ),
+            ),
+          ),
+        ),
+      )
+      .subscribe()
   }
 
-  private _handlerRecreateChildren() {
-    const active = this.stateSubject.getValue().get("active") as ComponentNames
-
-    R.ifElse(
-      (value: typeof active) => R.isNotNil(value),
-      (value) => {
-        this.children[value].component.create()
-
-        R.pipe(
-          (children: typeof this.children) => R.toPairs(children),
-          (pairs) =>
-            R.filter(
-              ([name]) =>
-                R.complement(R.equals(active))(name as ComponentNames),
-              pairs,
-            ),
-          R.forEach(([, value]) => value.component.destroy()),
-        )(this.children)
-      },
-      () => {},
-    )(active)
+  private _handleRemove() {
+    fromEvent(document, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        delegate("btn-remove"),
+        tap(() =>
+          this.stateSubject.next(
+            this.stateSubject
+              .getValue()
+              .setIn(["list"], this.stateSubject.getValue().get("list").pop()),
+          ),
+        ),
+      )
+      .subscribe()
   }
 
   render() {
     const template = compile(`
       <div class="header-game-box">
-        {{#if state.start}}
-        <div class="header-game-box__inner" {{{idParentAttrStateStart}}}>
+        <div class="header-game-box__inner" {{{children.add.component.parentAttrId}}}></div>
+        <div class="header-game-box__inner" {{{children.remove.component.parentAttrId}}}></div>
+        <div>
+          {{#each children.list}}
+            <div class="header-game-box__inner" {{{this.component.parentAttrId}}}></div>
+          {{/each}}
         </div>
-        {{/if}}
-        {{#if state.countdown}}
-        <div class="header-game-box__inner" {{{idParentAttrStateCountdown}}}>
-        </div>
-        {{/if}}
-        {{#if state.quiz}}
-        <div class="header-game-box__inner" {{{idParentAttrStateQuiz}}}>
-        </div>
-        {{/if}}
-        {{#if state.score}}
-        <div class="header-game-box__inner" {{{idParentAttrStateScore}}}>
-        </div>
-        {{/if}}
-        {{#if state.error}}
-        <div class="header-game-box__inner" {{{idParentAttrStateError}}}>
-        </div>
-        {{/if}}
       </div>
     `)
 
     return template({
-      idParentAttrStateStart: this.stateStart.idParentAttr,
-      idParentAttrStateCountdown: this.stateCountdown.idParentAttr,
-      idParentAttrStateQuiz: this.stateQuiz.idParentAttr,
-      idParentAttrStateScore: this.stateScore.idParentAttr,
-      idParentAttrStateError: this.stateError.idParentAttr,
-      state: this.stateSubject.getValue().toJS(),
+      children: this.stateSubject.getValue().toJS(),
     })
   }
 }

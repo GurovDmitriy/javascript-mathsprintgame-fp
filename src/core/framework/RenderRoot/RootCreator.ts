@@ -6,10 +6,10 @@ export class RootCreator implements RootRender {
   render(root: Element, componentRoot: () => ComponentStateful) {
     queueMicrotask(() => {
       const component = componentRoot()
-      root.setAttribute("data-brainful-idparent", component.idParent)
+      root.setAttribute(component.parentAttr, component.parentId)
 
       requestAnimationFrame(() => {
-        component.create()
+        component.mount()
       })
     })
   }
