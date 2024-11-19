@@ -50,8 +50,6 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
 
     this.state = this.stateSubject.asObservable()
     this._handleQuizFormat()
-
-    console.log("constructor", this)
   }
 
   onMounted() {

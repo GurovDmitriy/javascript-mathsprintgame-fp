@@ -50,8 +50,6 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
 
     this._handleSetProps()
     this._handleError()
-
-    console.log("constructor", this)
   }
 
   onMounted() {

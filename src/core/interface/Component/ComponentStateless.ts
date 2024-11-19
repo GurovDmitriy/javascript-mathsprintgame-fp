@@ -2,7 +2,8 @@ export interface ComponentStateless<TProps = any> {
   parentId: string
   parentAttr: string
   parentAttrId: string
-  setProps(props: TProps): void
+  props(): TProps
+  setProps(cb: () => TProps): this
   mount(): void
   destroy(): void
   onMounted(): void

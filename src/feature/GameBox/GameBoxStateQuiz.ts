@@ -60,8 +60,6 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
     this._handleSetProps()
     this._handleAnswerActive()
     this._handleToggleState()
-
-    console.log("constructor", this)
   }
 
   onMounted() {

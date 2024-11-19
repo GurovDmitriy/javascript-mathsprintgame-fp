@@ -3,6 +3,7 @@ import { fromJS } from "immutable"
 import { injectable } from "inversify"
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { ComponentBase } from "../../../core/framework/Component"
+import { Children } from "../../../core/interface"
 
 interface Props {
   content: string
@@ -10,13 +11,16 @@ interface Props {
 }
 
 @injectable()
-export class ButtonHeavy extends ComponentBase<Props> {
+export class ButtonHeavy extends ComponentBase {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<any>
   public state: Observable<any>
+  public props: () => Props
 
   constructor() {
     super()
+
+    this.props = () => ({}) as Props
 
     this.unsubscribe = new Subject<void>()
     this.stateSubject = new BehaviorSubject<any>(
@@ -25,8 +29,15 @@ export class ButtonHeavy extends ComponentBase<Props> {
       }),
     )
     this.state = this.stateSubject.asObservable()
+  }
 
-    console.log("constructor button")
+  setProps(cb: () => Props) {
+    this.props = cb
+    return this
+  }
+
+  children(): Children[] {
+    return []
   }
 
   render() {
@@ -36,9 +47,11 @@ export class ButtonHeavy extends ComponentBase<Props> {
       </button>
     `)
 
+    const props = this.props()
+
     return template({
-      content: this.props.content || "",
-      classes: this.props.classes || "",
+      content: props.content,
+      classes: props.classes,
     })
   }
 }

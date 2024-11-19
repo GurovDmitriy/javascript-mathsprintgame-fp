@@ -4,21 +4,27 @@ import type { ComponentStateless } from "../../interface"
 export abstract class ComponentPure<TProps = any>
   implements ComponentStateless<TProps>
 {
-  public props: TProps = {} as TProps
+  public props: TProps
+  private _propsCb: () => TProps
 
   public parentId: string
   public parentAttr: string
   public parentAttrId: string
 
   protected constructor() {
+    this._propsCb = () => ({}) as TProps
+
     const attrGenerated = this._attrGenerator()
     this.parentId = attrGenerated.id
     this.parentAttr = attrGenerated.attr
     this.parentAttrId = attrGenerated.value
+
+    this.props = {} as TProps
   }
 
-  setProps(props: TProps) {
-    this.props = props
+  setProps(cb: () => TProps) {
+    if (cb) this._propsCb = cb
+    return this
   }
 
   public mount(): void {
@@ -28,6 +34,7 @@ export abstract class ComponentPure<TProps = any>
         R.ifElse(
           (elementParent: Element | null) => Boolean(elementParent),
           (elementParent) => {
+            this.props = this._propsCb()
             ;(elementParent as Element).innerHTML = this.render()
             requestAnimationFrame(() => {
               this.onMounted()

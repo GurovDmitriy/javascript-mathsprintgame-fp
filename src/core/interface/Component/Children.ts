@@ -1,8 +1,4 @@
-import { ComponentStateful } from "./ComponentStateful.js"
+import { ComponentStateful } from "./ComponentStateful"
+import { ComponentStateless } from "./ComponentStateless"
 
-export type Children<TNames = any> = {
-  [K in TNames as string]: {
-    value: K
-    component: ComponentStateful
-  }
-}
+export type Children = ComponentStateless | ComponentStateful

@@ -53,8 +53,6 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
 
     this.state = this.stateSubject.asObservable()
 
-    console.log("constructor", this)
-
     this._handleSetProps()
   }
 

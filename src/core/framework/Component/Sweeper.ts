@@ -1,6 +1,7 @@
 import { injectable } from "inversify"
 import { Observable, Subject } from "rxjs"
 
+// TODO: add config skipping update count strategy
 @injectable()
 export class Sweeper {
   stateSubject: Subject<any>
@@ -12,7 +13,6 @@ export class Sweeper {
   }
 
   sweep(): void {
-    console.log("1")
     this.stateSubject.next({})
   }
 }

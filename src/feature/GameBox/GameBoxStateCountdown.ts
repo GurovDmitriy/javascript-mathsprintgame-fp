@@ -43,8 +43,6 @@ export class GameBoxStateCountdown extends ComponentBase<
     )
 
     this.state = this.stateSubject.asObservable()
-
-    console.log("constructor", this)
   }
 
   getState() {

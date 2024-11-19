@@ -11,8 +11,6 @@ interface Props {
 export class Button extends ComponentPure<Props> {
   constructor() {
     super()
-
-    console.log("constructor button")
   }
 
   render() {
@@ -23,8 +21,8 @@ export class Button extends ComponentPure<Props> {
     `)
 
     return template({
-      content: this.props.content || "",
-      classes: this.props.classes || "",
+      content: this.props.content,
+      classes: this.props.classes,
     })
   }
 }

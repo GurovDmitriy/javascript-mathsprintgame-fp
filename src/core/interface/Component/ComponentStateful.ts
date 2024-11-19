@@ -1,23 +1,17 @@
-import { BehaviorSubject, Observable, Subject } from "rxjs"
+import { BehaviorSubject, Observable } from "rxjs"
+import { Children } from "./Children"
 
-export interface ComponentStateful<
-  TProps = any,
-  TState = any,
-  TChildren = any,
-> {
+export interface ComponentStateful<TProps = any, TState = any> {
   parentId: string
   parentAttr: string
   parentAttrId: string
-  unsubscribe: Subject<void>
+  props: () => TProps
   stateSubject: BehaviorSubject<TState>
   state: Observable<TState>
-  children: TChildren
-  setProps(props: TProps): void
+  children(state: BehaviorSubject<TState>): Children[]
+  setProps(cb: () => TProps): this
   mount(): void
-  create(): void
   destroy(): void
-  onInit(): void
-  onCreate(): void
   onMounted(): void
   onUpdated(): void
   onDestroy(): void
