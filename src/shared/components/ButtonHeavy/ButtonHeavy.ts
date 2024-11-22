@@ -1,57 +1,80 @@
-import { compile } from "handlebars"
 import { fromJS } from "immutable"
 import { injectable } from "inversify"
-import { BehaviorSubject, Observable, Subject } from "rxjs"
-import { ComponentBase } from "../../../core/framework/Component"
-import { Children } from "../../../core/interface"
+import mustache from "mustache"
+import {
+  BehaviorSubject,
+  fromEvent,
+  Observable,
+  Subject,
+  takeUntil,
+  tap,
+} from "rxjs"
+import { ComponentBase } from "../../../core/framework/Component/index.js"
+import { delegate } from "../../tools/delegate.js"
 
 interface Props {
   content: string
-  classes?: string
+  classes: string
 }
 
 @injectable()
-export class ButtonHeavy extends ComponentBase {
+export class ButtonHeavy extends ComponentBase<Props> {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<any>
   public state: Observable<any>
-  public props: () => Props
 
   constructor() {
     super()
-
-    this.props = () => ({}) as Props
 
     this.unsubscribe = new Subject<void>()
     this.stateSubject = new BehaviorSubject<any>(
       fromJS({
         add: { some: "name" },
+        count: 0,
       }),
     )
     this.state = this.stateSubject.asObservable()
+
+    fromEvent(this.host, "click")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        delegate("btn-heavy"),
+        tap(() => {
+          console.log(123)
+
+          this.stateSubject.next(
+            this.stateSubject.getValue().updateIn(["count"], (v: number) => {
+              return v + 1
+            }),
+          )
+        }),
+      )
+      .subscribe()
   }
 
-  setProps(cb: () => Props) {
-    this.props = cb
-    return this
+  onMounted() {
+    console.log("on Mounted", this)
   }
 
-  children(): Children[] {
-    return []
+  onUpdated() {
+    console.log("on Update", this)
+  }
+
+  onDestroy() {
+    console.log("on Destroy", this)
   }
 
   render() {
-    const template = compile(`
-      <button class="btn {{classes}}">
+    const template = `
+      <button class="btn btn-heavy {{classes}}">
         {{content}}
+        {{count}}
       </button>
-    `)
+    `
 
-    const props = this.props()
-
-    return template({
-      content: props.content,
-      classes: props.classes,
+    return mustache.render(template, {
+      ...this.props,
+      count: () => this.stateSubject.getValue().get("count"),
     })
   }
 }

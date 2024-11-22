@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
-import { fromJS, List, Map } from "immutable"
+import { FromJS, fromJS, List, Map } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -11,17 +11,30 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { containerApp } from "../../app/compositionRoot/container"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import type { Game } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { ButtonHeavy } from "../../shared/components/ButtonHeavy"
-import { delegate } from "../../shared/tools/delegate"
-import { ComponentNames } from "./types"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type { Game } from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { ButtonHeavy } from "../../shared/components/ButtonHeavy/index.js"
+import { delegate } from "../../shared/tools/delegate.js"
+import { ComponentNames } from "./types.js"
+
+interface ElementBtn {
+  component: Children
+}
+
+interface State {
+  add: ElementBtn
+  remove: ElementBtn
+  list: [ElementBtn]
+}
+
+type StateImm = FromJS<State>
 
 @injectable()
-export class GameBox extends ComponentBase<any, any> {
+export class GameBox extends ComponentBase<any, StateImm> {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<any>
   public state: Observable<any>
@@ -33,9 +46,10 @@ export class GameBox extends ComponentBase<any, any> {
     this.stateSubject = new BehaviorSubject<any>(
       fromJS({
         add: {
-          component: containerApp
-            .get(Button)
-            .setProps(() => ({ content: "add", classes: "btn-add" })),
+          component: containerApp.get(Button).setProps(() => ({
+            content: "add",
+            classes: "btn-add",
+          })),
         },
         remove: {
           component: containerApp
@@ -60,23 +74,25 @@ export class GameBox extends ComponentBase<any, any> {
 
     this._handleAdd()
     this._handleRemove()
-    this._handlerError()
+    this._handleError()
   }
 
-  children(state: BehaviorSubject<any>) {
-    const newChildren = []
-    const traversal = (element) => {
-      if (Map.isMap(element)) {
-        newChildren.push(element.get("component"))
-      }
+  children(): { forEach(cb: (c: Children) => void): void } {
+    return {
+      forEach: (cb: (c: Children) => void) => {
+        const traversal = (c: any) => {
+          if (Map.isMap(c)) {
+            cb(c.get("component") as Children)
+          }
 
-      if (List.isList(element)) {
-        element.forEach((e) => traversal(e))
-      }
+          if (List.isList(c)) {
+            c.forEach((c) => traversal(c))
+          }
+        }
+
+        this.stateSubject.getValue().forEach((c: any) => traversal(c))
+      },
     }
-
-    state.getValue().forEach((e) => traversal(e))
-    return newChildren
   }
 
   onDestroy() {
@@ -88,7 +104,7 @@ export class GameBox extends ComponentBase<any, any> {
     console.log(name)
   }
 
-  private _handlerError() {
+  private _handleError() {
     this._game.error
       .pipe(
         takeUntil(this.unsubscribe),
@@ -109,7 +125,7 @@ export class GameBox extends ComponentBase<any, any> {
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn-add"),
-        tap(() =>
+        tap(() => {
           this.stateSubject.next(
             this.stateSubject.getValue().setIn(
               ["list"],
@@ -118,14 +134,15 @@ export class GameBox extends ComponentBase<any, any> {
                 .get("list")
                 .push(
                   fromJS({
-                    component: containerApp
-                      .get(ButtonHeavy)
-                      .setProps(() => ({ content: "New button" })),
+                    component: containerApp.get(ButtonHeavy).setProps(() => ({
+                      content: "New button",
+                      classes: "btn-game-box",
+                    })),
                   }),
                 ),
             ),
-          ),
-        ),
+          )
+        }),
       )
       .subscribe()
   }
@@ -147,19 +164,21 @@ export class GameBox extends ComponentBase<any, any> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <div class="header-game-box">
-        <div class="header-game-box__inner" {{{children.add.component.parentAttrId}}}></div>
-        <div class="header-game-box__inner" {{{children.remove.component.parentAttrId}}}></div>
+        <div class="header-game-box__inner">
+          <div data-b-key="{{children.add.component.id}}"></div>
+          <div data-b-key="{{children.remove.component.id}}"></div>
+        </div>
         <div>
-          {{#each children.list}}
-            <div class="header-game-box__inner" {{{this.component.parentAttrId}}}></div>
-          {{/each}}
+          {{#children.list}}
+            <div data-b-key="{{component.id}}"></div>
+          {{/children.list}}
         </div>
       </div>
-    `)
+    `
 
-    return template({
+    return M.render(template, {
       children: this.stateSubject.getValue().toJS(),
     })
   }

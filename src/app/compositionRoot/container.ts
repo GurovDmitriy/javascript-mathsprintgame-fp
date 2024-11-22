@@ -1,13 +1,13 @@
 import { Container, interfaces } from "inversify"
-import { container } from "../../core/compositionRoot/container"
+import { container } from "../../core/compositionRoot/container.js"
+import { ErrorInformer } from "../../domain/Error/ErrorInformer.js"
 import {
   ErrorHeavy,
   ErrorLight,
   ErrorReadable,
   ErrorService,
-} from "../../domain/Error"
-import { ErrorInformer } from "../../domain/Error/ErrorInformer"
-import { GameMathSprint, GameRemote } from "../../domain/Game"
+} from "../../domain/Error/index.js"
+import { GameMathSprint, GameRemote } from "../../domain/Game/index.js"
 import type {
   ErrorBase,
   ErrorCode,
@@ -20,9 +20,19 @@ import type {
   Game,
   GameConfig,
   Remote,
-} from "../../interfaces"
-import { ErrorConfiguration, GameConfiguration } from "../configuration"
-import { TYPES } from "./types"
+} from "../../interfaces/index.js"
+import {
+  ErrorConfiguration,
+  GameConfiguration,
+} from "../configuration/index.js"
+import { TYPES } from "./types.js"
+
+// @injectable()
+// export class MyId implements IdGenerator {
+//   public generate(): string {
+//     return `my-${nanoid(10)}`
+//   }
+// }
 
 // Settings IoC
 const containerApp = new Container({
@@ -31,6 +41,10 @@ const containerApp = new Container({
 })
 
 containerApp.parent = container
+
+// Replace
+// container.unbind(TYPESB.ComponentId)
+// container.bind<IdGenerator>(TYPESB.ComponentId).to(MyId)
 
 // Base
 containerApp.bind<ErrorBase>(TYPES.ErrorHeavy).to(ErrorHeavy)

@@ -1,7 +1,7 @@
 import { injectable } from "inversify"
 import * as R from "ramda"
 import { BehaviorSubject, Observable, tap } from "rxjs"
-import { RootCreator } from "../../core/framework/RenderRoot"
+import { RootCreator } from "../../core/framework/RootCreator"
 import { ErrorGlobal } from "../../feature/ErrorGlobal/ErrorGlobal"
 import { ErrorCustom, ErrorGlobalHandler, ErrorInfo } from "../../interfaces"
 

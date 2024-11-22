@@ -1,10 +1,10 @@
-import { compile } from "handlebars"
 import { injectable } from "inversify"
-import { ComponentPure } from "../../../core/framework/Component"
+import mustache from "mustache"
+import { ComponentPure } from "../../../core/framework/Component/index.js"
 
 interface Props {
   content: string
-  classes?: string
+  classes: string
 }
 
 @injectable()
@@ -14,15 +14,14 @@ export class Button extends ComponentPure<Props> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <button class="btn {{classes}}">
         {{content}}
       </button>
-    `)
+    `
 
-    return template({
-      content: this.props.content,
-      classes: this.props.classes,
-    })
+    return mustache.render(template, this.props)
   }
+
+  children(): void {}
 }

@@ -1,8 +1,8 @@
 // @ts-check
-const eslint = require("@eslint/js")
-const tseslint = require("typescript-eslint")
+import eslint from "@eslint/js"
+import tseslint from "typescript-eslint"
 
-module.exports = tseslint.config(
+export default tseslint.config(
   {
     ignores: ["dist", ".parcel-cache"],
   },

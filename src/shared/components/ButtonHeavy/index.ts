@@ -1,1 +1,1 @@
-export * from "./ButtonHeavy"
+export * from "./ButtonHeavy.js"

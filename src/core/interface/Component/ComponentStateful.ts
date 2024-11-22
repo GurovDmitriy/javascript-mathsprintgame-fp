@@ -1,15 +1,16 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Children } from "./Children"
+import { Children } from "./Children.js"
 
 export interface ComponentStateful<TProps = any, TState = any> {
-  parentId: string
-  parentAttr: string
-  parentAttrId: string
-  props: () => TProps
+  id: string
+  host: Element
+  parent: ComponentStateful | undefined
+  props: TProps
   stateSubject: BehaviorSubject<TState>
   state: Observable<TState>
-  children(state: BehaviorSubject<TState>): Children[]
+  children(): { forEach: (cb: (c: Children) => void) => void }
   setProps(cb: () => TProps): this
+  setParent(parent: ComponentStateful | undefined): this
   mount(): void
   destroy(): void
   onMounted(): void

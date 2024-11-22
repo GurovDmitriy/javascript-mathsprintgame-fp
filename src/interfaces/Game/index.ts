@@ -1,6 +1,6 @@
 import { FromJS } from "immutable"
 import { Observable } from "rxjs"
-import { ErrorCustom } from "../Error"
+import { ErrorCustom } from "../Error/index.js"
 
 export interface Game {
   state: Observable<FromJS<GameState>>

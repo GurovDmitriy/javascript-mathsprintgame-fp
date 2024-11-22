@@ -1,4 +1,4 @@
-import { ComponentStateful } from "./ComponentStateful"
-import { ComponentStateless } from "./ComponentStateless"
+import { ComponentStateful } from "./ComponentStateful.js"
+import { ComponentStateless } from "./ComponentStateless.js"
 
 export type Children = ComponentStateless | ComponentStateful

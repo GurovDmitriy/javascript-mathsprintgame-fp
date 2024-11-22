@@ -1,75 +1,121 @@
+import { is } from "immutable"
 import * as R from "ramda"
-import type { ComponentStateless } from "../../interface"
+import { distinctUntilChanged, skip, Subject, takeUntil, tap } from "rxjs"
+import { container } from "../../compositionRoot/container.js"
+import { TYPES } from "../../compositionRoot/types.js"
+import type {
+  ComponentStateful,
+  ComponentStateless,
+  DomFinder,
+  IdGenerator,
+} from "../../interface/index.js"
 
 export abstract class ComponentPure<TProps = any>
   implements ComponentStateless<TProps>
 {
-  public props: TProps
-  private _propsCb: () => TProps
+  #idGenerator = container.get<IdGenerator>(TYPES.ComponentId)
+  #domFinder = container.get<DomFinder>(TYPES.ElementFinder)
 
-  public parentId: string
-  public parentAttr: string
-  public parentAttrId: string
+  #unsubscribe: Subject<void>
+  #id: string
+  #host: Element
+  #parent: ComponentStateful | undefined
+  #props: () => TProps
 
   protected constructor() {
-    this._propsCb = () => ({}) as TProps
-
-    const attrGenerated = this._attrGenerator()
-    this.parentId = attrGenerated.id
-    this.parentAttr = attrGenerated.attr
-    this.parentAttrId = attrGenerated.value
-
-    this.props = {} as TProps
+    this.#unsubscribe = new Subject<void>()
+    this.#id = this.#idGenerator.generate()
+    this.#host = document.createElement("div")
+    this.#parent = undefined
+    this.#props = () => ({}) as TProps
   }
 
-  setProps(cb: () => TProps) {
-    if (cb) this._propsCb = cb
+  abstract render(): string
+
+  onMounted(): void {}
+  onUpdated(): void {}
+  onDestroy(): void {}
+
+  get id(): string {
+    return this.#id
+  }
+
+  get host(): Element {
+    return this.#host
+  }
+
+  get parent(): ComponentStateful | undefined {
+    return this.#parent
+  }
+
+  get props(): TProps {
+    return this.#props()
+  }
+
+  setParent(parent: ComponentStateful | undefined): this {
+    if (this.#parent) return this
+
+    this.#parent = parent
+    this._cleaner()
     return this
   }
 
-  public mount(): void {
+  setProps(cb: () => TProps): this {
+    this.#props = cb
+    return this
+  }
+
+  mount(): void {
     queueMicrotask(() => {
       R.pipe(
-        () => this._elementFinder(),
         R.ifElse(
-          (elementParent: Element | null) => Boolean(elementParent),
-          (elementParent) => {
-            this.props = this._propsCb()
-            ;(elementParent as Element).innerHTML = this.render()
+          (parentElement: Element | null) => Boolean(parentElement),
+          (parentElement) => {
+            this.#host.innerHTML = this.render()
+            ;(parentElement as Element).replaceChildren(this.#host)
+
             requestAnimationFrame(() => {
               this.onMounted()
             })
           },
           R.T,
         ),
-      )()
+      )(this.#domFinder.find(this.#parent!.host, this.#id))
     })
   }
 
-  destroy(): void {}
+  destroy(): void {
+    queueMicrotask(() => {
+      this.onDestroy()
 
-  onMounted(): void {}
-  onDestroy(): void {}
-
-  abstract render(): string
-
-  private _elementFinder(): Element | null {
-    if (document) {
-      return document.querySelector(`[${this.parentAttrId}]`)
-    } else {
-      return null
-    }
+      this.#unsubscribe.next()
+      this.#unsubscribe.complete()
+      this.#unsubscribe = undefined!
+      this.#host = undefined!
+      this.#parent = undefined!
+      this.#props = undefined!
+      this.#id = undefined!
+      this.#idGenerator = undefined!
+      this.#domFinder = undefined!
+    })
   }
 
-  private _attrGenerator(): { attr: string; id: string; value: string } {
-    const attr = "data-brainful-parent-id"
-    const id = `brainful-${crypto.randomUUID()}`
-    const value = `${attr}=${id}`
-
-    return {
-      attr,
-      id,
-      value,
-    }
+  private _cleaner() {
+    this.#parent!.state.pipe(
+      skip(1),
+      takeUntil(this.#unsubscribe),
+      distinctUntilChanged((previous: any, current: any) =>
+        is(previous, current),
+      ),
+      tap(() => {
+        requestAnimationFrame(() => {
+          R.ifElse(
+            () => R.isNil(this.#domFinder.find(this.parent!.host, this.id)),
+            () => this.destroy(),
+            R.T,
+          )()
+        })
+      }),
+    ).subscribe()
   }
 }

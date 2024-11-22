@@ -1,7 +1,7 @@
 import { Container } from "inversify"
-import { Sweeper } from "../framework/Component/Sweeper"
-import { RootCreator } from "../framework/RenderRoot"
-import type { RootRender } from "../interface"
+import { ComponentId, ElementFinder, Sweeper } from "../framework/Component"
+import { RootCreator } from "../framework/RootCreator"
+import type { Cleaner, DomFinder, IdGenerator, RootRender } from "../interface"
 import { TYPES } from "./types"
 
 const container = new Container({
@@ -9,7 +9,15 @@ const container = new Container({
   skipBaseClassChecks: true,
 })
 
-container.bind<RootRender>(TYPES.RenderRoot).to(RootCreator)
-container.bind<Sweeper>(TYPES.Sweeper).to(Sweeper).inSingletonScope()
+container.bind<RootRender>(TYPES.RootCreator).to(RootCreator)
+container
+  .bind<IdGenerator>(TYPES.ComponentId)
+  .to(ComponentId)
+  .inSingletonScope()
+container
+  .bind<DomFinder>(TYPES.ElementFinder)
+  .to(ElementFinder)
+  .inSingletonScope()
+container.bind<Cleaner>(TYPES.Sweeper).to(Sweeper).inSingletonScope()
 
 export { container }
