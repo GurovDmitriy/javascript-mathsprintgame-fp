@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import Immutable, { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import {
   BehaviorSubject,
   catchError,
@@ -12,17 +12,30 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import type { ErrorHandler, Game, GameResult, Remote } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { delegate } from "../../shared/tools/delegate"
-import { GameBoxContext } from "./types"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type {
+  ErrorHandler,
+  Game,
+  GameResult,
+  Remote,
+} from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { delegate } from "../../shared/tools/delegate.js"
+import { GameBoxContext } from "./types.js"
 
 interface State {
   final: number
   base: number
   penalty: number
+  children: {
+    playAgain: {
+      component: Button
+    }
+  }
 }
 
 type StateImm = FromJS<State>
@@ -37,7 +50,6 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
-    public readonly playAgain: Button,
   ) {
     super()
 
@@ -48,29 +60,31 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
         final: 0,
         base: 0,
         penalty: 0,
-      }),
+        children: {
+          playAgain: {
+            component: containerApp.get(Button).setProps(() => ({
+              classes: "btn--play-again btn-box__btn",
+              content: "Play Again",
+            })),
+          },
+        },
+      } satisfies State),
     )
 
     this.state = this.stateSubject.asObservable()
 
-    this._handleSetProps()
-  }
-
-  onMounted(): void {
-    // this._handleResult()
+    this._handleResult()
     this._handleReplay()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
   }
 
-  private _handleSetProps(): void {
-    this.playAgain.setProps({
-      classes: "btn--play-again btn-box__btn",
-      content: "Play Again",
-    })
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
   private _handleResult(): void {
@@ -80,17 +94,14 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
           Immutable.is(previous.get("result"), current.get("result")),
         ),
         tap((state) => {
-          console.log("score")
           const resultRaw = state.toJS().result as GameResult
 
           this.stateSubject.next(
-            this.stateSubject.getValue().merge(
-              fromJS({
-                final: resultRaw.total,
-                base: resultRaw.base,
-                penalty: resultRaw.penalty,
-              }),
-            ),
+            this.stateSubject
+              .getValue()
+              .set("final", resultRaw.total)
+              .set("base", resultRaw.base)
+              .set("penalty", resultRaw.penalty),
           )
         }),
         catchError((error) => {
@@ -102,7 +113,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleReplay(): void {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn--play-again"),
@@ -119,7 +130,7 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   render(): string {
-    const template = compile(`
+    const template = `
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
@@ -141,17 +152,17 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
                     </tr>
                     <tr class="table-score__item table-score__item--final-time">
                       <th>Final</th>
-                      <td>{{state.final}}</td>
+                      <td>{{final}}</td>
                     </tr>
                     <tr class="table-score__item table-score__item--base-time">
                       <th>Base</th>
-                      <td>{{state.base}}</td>
+                      <td>{{base}}</td>
                     </tr>
                     <tr
                       class="table-score__item table-score__item--penalty-time"
                     >
                       <th>Penalty</th>
-                      <td>{{state.penalty}}</td>
+                      <td>{{penalty}}</td>
                     </tr>
                   </table>
                 </div>
@@ -162,16 +173,19 @@ export class GameBoxStateScore extends ComponentBase<GameBoxContext, StateImm> {
         <!-- Button -->
         <section class="btn-box form__btn-box">
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
-           <div class="btn-quiz-box btn-box__btn-quiz-box">
-             {{{playAgain}}}
+           <div class="btn-quiz-box btn-box__btn-quiz-box" data-b-key="{{playAgain.id}}">
           </div>
         </section>
       </header>
-    `)
+    `
 
-    return template({
-      state: this.stateSubject.getValue().toJS(),
-      playAgain: this.playAgain.render(),
+    return M.render(template, {
+      final: this.stateSubject.getValue().get("final"),
+      base: this.stateSubject.getValue().get("base"),
+      penalty: this.stateSubject.getValue().get("penalty"),
+      playAgain: this.stateSubject
+        .getValue()
+        .getIn(["children", "playAgain", "component"]),
     })
   }
 }

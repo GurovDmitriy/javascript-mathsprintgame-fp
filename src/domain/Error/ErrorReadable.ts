@@ -4,7 +4,7 @@ import type {
   ErrorInfo,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces"
+} from "../../interfaces/index.js"
 
 @injectable()
 export class ErrorReadable implements ErrorInfo {

@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -14,16 +14,27 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import { Children } from "../../core/interface"
-import type { ErrorHandler, Game, Remote } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { delegate } from "../../shared/tools/delegate"
-import { SelectQuestion } from "../SelectQuestion"
-import { GameBoxContext } from "./types"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type { ErrorHandler, Game, Remote } from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { delegate } from "../../shared/tools/delegate.js"
+import { SelectQuestion } from "../SelectQuestion/index.js"
+import { GameBoxContext } from "./types.js"
 
-interface State {}
+interface State {
+  children: {
+    selectQuestion: {
+      component: SelectQuestion
+    }
+    startRound: {
+      component: Button
+    }
+  }
+}
 
 type StateImm = FromJS<State>
 
@@ -32,51 +43,47 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<StateImm>
   public state: Observable<StateImm>
-  public children: Children<"selectQuestion">
 
   constructor(
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
-    public readonly selectQuestion: SelectQuestion,
-    public readonly startRound: Button,
   ) {
     super()
 
     this.unsubscribe = new Subject<void>()
-
-    this.children = {
-      selectQuestion: {
-        value: "selectQuestion",
-        component: this.selectQuestion,
-      },
-    }
-
-    this.stateSubject = new BehaviorSubject<StateImm>(fromJS({}))
-
-    this._handleSetProps()
-
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        children: {
+          selectQuestion: {
+            component: containerApp.get(SelectQuestion),
+          },
+          startRound: {
+            component: containerApp.get(Button).setProps(() => ({
+              classes: "btn--start btn-box__btn",
+              content: "Start Round",
+            })),
+          },
+        },
+      }),
+    )
     this.state = this.stateSubject.asObservable()
-  }
 
-  onMounted() {
     this._handleStartGame()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
   }
 
-  private _handleSetProps(): void {
-    this.startRound.setProps({
-      classes: "btn--start btn-box__btn",
-      content: "Start Round",
-    })
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
   private _handleStartGame(): void {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn--start"),
@@ -99,7 +106,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
@@ -110,7 +117,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
           </h2>
 
           <form class="form navigation__form">
-            <div class="form__fieldset-wrapper" {{{idParentAttrSelectQuestion}}}>
+            <div class="form__fieldset-wrapper" data-b-key="{{selectQuestion.id}}">
             </div>
             <button class="btn form__btn visually-hidden" type="submit" disabled>
               Play
@@ -120,14 +127,18 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
         <!-- Button -->
         <section class="btn-box form__btn-box">
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
-          {{{startRound}}}
+          <div data-b-key="{{startRound.id}}"></div>
         </section>
       </header>
-    `)
+    `
 
-    return template({
-      idParentAttrSelectQuestion: this.selectQuestion.parentAttrId,
-      startRound: this.startRound.render(),
+    return M.render(template, {
+      selectQuestion: this.stateSubject
+        .getValue()
+        .getIn(["children", "selectQuestion", "component"]),
+      startRound: this.stateSubject
+        .getValue()
+        .getIn(["children", "startRound", "component"]),
     })
   }
 }

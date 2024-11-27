@@ -1,5 +1,5 @@
-export type ComponentNames = "start" | "countdown" | "quiz" | "score" | "error"
+export type Step = "start" | "countdown" | "quiz" | "score" | "error"
 
 export interface GameBoxContext {
-  setState: (name: ComponentNames) => void
+  setState: (name: Step) => void
 }

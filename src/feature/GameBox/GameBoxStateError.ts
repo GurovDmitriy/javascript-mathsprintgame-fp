@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -11,15 +11,28 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import type { ErrorHandler, ErrorInfo, Game, Remote } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { delegate } from "../../shared/tools/delegate"
-import { GameBoxContext } from "./types"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type {
+  ErrorHandler,
+  ErrorInfo,
+  Game,
+  Remote,
+} from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { delegate } from "../../shared/tools/delegate.js"
+import { GameBoxContext } from "./types.js"
 
 interface State {
   error: ErrorInfo | null
+  children: {
+    button: {
+      component: Button
+    }
+  }
 }
 
 type StateImm = FromJS<State>
@@ -34,7 +47,6 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
-    public button: Button,
   ) {
     super()
 
@@ -43,26 +55,35 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
         error: null,
+        children: {
+          button: {
+            component: containerApp.get(Button).setProps(() => ({
+              classes: "btn--play-again btn-box__btn",
+              content: "Try Again",
+            })),
+          },
+        },
       }),
     )
 
     this.state = this.stateSubject.asObservable()
 
-    this._handleSetProps()
-    this._handleError()
-  }
-
-  onMounted() {
     this._handleToggleState()
+    this._handleError()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
+  }
+
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
   private _handleToggleState() {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn--play-again"),
@@ -72,13 +93,6 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
         }),
       )
       .subscribe()
-  }
-
-  private _handleSetProps() {
-    this.button.setProps({
-      classes: "btn--play-again btn-box__btn",
-      content: "Try Again",
-    })
   }
 
   private _handleError() {
@@ -100,7 +114,7 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
@@ -137,16 +151,14 @@ export class GameBoxStateError extends ComponentBase<GameBoxContext, StateImm> {
         <!-- Button -->
         <section class="btn-box form__btn-box">
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
-           <div class="btn-quiz-box btn-box__btn-quiz-box">
-             {{{tryAgain}}}
+           <div class="btn-quiz-box btn-box__btn-quiz-box" data-b-key="{{state.children.button.component.id}}">
           </div>
         </section>
       </header>
-    `)
+    `
 
-    return template({
+    return M.render(template, {
       state: this.stateSubject.getValue().toJS(),
-      tryAgain: this.button.render(),
     })
   }
 }

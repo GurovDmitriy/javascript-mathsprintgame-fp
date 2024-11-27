@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { TYPES } from "../../app/compositionRoot/types"
+import { TYPES } from "../../app/compositionRoot/types.js"
 import type {
   ErrorBase,
   ErrorCode,
@@ -12,9 +12,9 @@ import type {
   ErrorInfo,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces"
-import { ErrorHeavy } from "./ErrorHeavy"
-import { ErrorLight } from "./ErrorLight"
+} from "../../interfaces/index.js"
+import { ErrorHeavy } from "./ErrorHeavy.js"
+import { ErrorLight } from "./ErrorLight.js"
 
 @injectable()
 export class ErrorService implements ErrorHandler {

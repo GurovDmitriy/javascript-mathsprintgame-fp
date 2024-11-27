@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -14,11 +14,10 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import { Children } from "../../core/interface"
-import type { ErrorHandler, Game, Remote } from "../../interfaces"
-import { delegate } from "../../shared/tools/delegate"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import type { ErrorHandler, Game, Remote } from "../../interfaces/index.js"
+import { delegate } from "../../shared/tools/delegate.js"
 
 interface State {
   questions: { classSelected: string; value: number; record: number }[]
@@ -31,7 +30,6 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
   public unsubscribe: Subject<void>
   public stateSubject: BehaviorSubject<StateImm>
   public state: Observable<StateImm>
-  public children: Children<{}> = {}
 
   constructor(
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
@@ -41,28 +39,25 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
     super()
 
     this.unsubscribe = new Subject<void>()
-
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
         questions: [],
       }),
     )
-
     this.state = this.stateSubject.asObservable()
-    this._handleQuizFormat()
-  }
 
-  onMounted() {
+    this._handleQuizFormat()
     this._handleSelectQuestions()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
   }
 
   private _handleSelectQuestions() {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("input-box"),
@@ -133,32 +128,32 @@ export class SelectQuestion extends ComponentBase<any, StateImm> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <fieldset class="fieldset form__fieldset" id="splash-page">
         <legend class="fieldset__legend">Questions</legend>
         <div class="questions fieldset__questions">
-          {{#each state.questions}}
-            <div class="input-box questions__input-box {{this.classSelected}}" data-question="{{this.value}}">
-              <label class="input-box__label" for="value-{{this.value}}" tabindex="{{@index}}">
-                <span>{{this.value}} Questions</span>
+          {{#state.questions}}
+            <div class="input-box questions__input-box {{classSelected}}" data-question="{{value}}">
+              <label class="input-box__label" for="value-{{value}}" tabindex="0">
+                <span>{{value}} Questions</span>
                 <div class="best-score input-box__best-score">
                   <h3 class="best-score__caption">Best Score</h3>
-                  <strong class="best-score__value">{{this.record}}</strong>
+                  <strong class="best-score__value">{{record}}</strong>
                 </div></label
               >
               <input
                 class="input-box__input visually-hidden"
                 type="radio"
                 name="questions"
-                value="{{this.value}}"
-                id="value-{{this.value}}"
+                value="{{value}}"
+                id="value-{{value}}"
               />
             </div>
-          {{/each}}
+          {{/state.questions}}
         </div>
       </fieldset>
-    `)
+    `
 
-    return template({ state: this.stateSubject.getValue().toJS() })
+    return M.render(template, { state: this.stateSubject.getValue().toJS() })
   }
 }

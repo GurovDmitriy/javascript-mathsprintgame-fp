@@ -1,6 +1,16 @@
 import { is } from "immutable"
 import * as R from "ramda"
-import { distinctUntilChanged, skip, Subject, takeUntil, tap } from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  mergeMap,
+  Observable,
+  skip,
+  Subject,
+  take,
+  takeUntil,
+  tap,
+} from "rxjs"
 import { container } from "../../compositionRoot/container.js"
 import { TYPES } from "../../compositionRoot/types.js"
 import type {
@@ -10,6 +20,12 @@ import type {
   IdGenerator,
 } from "../../interface/index.js"
 
+type EventName = "setParent"
+
+interface Events {
+  event: EventName
+}
+
 export abstract class ComponentPure<TProps = any>
   implements ComponentStateless<TProps>
 {
@@ -17,17 +33,27 @@ export abstract class ComponentPure<TProps = any>
   #domFinder = container.get<DomFinder>(TYPES.ElementFinder)
 
   #unsubscribe: Subject<void>
+  #eventsSubject: Subject<Events>
+  #events: Observable<Events>
+
   #id: string
   #host: Element
   #parent: ComponentStateful | undefined
+  #slick: () => boolean
   #props: () => TProps
 
   protected constructor() {
     this.#unsubscribe = new Subject<void>()
+    this.#eventsSubject = new Subject<Events>()
+    this.#events = this.#eventsSubject.asObservable()
+
     this.#id = this.#idGenerator.generate()
     this.#host = document.createElement("div")
     this.#parent = undefined
+    this.#slick = () => false
     this.#props = () => ({}) as TProps
+
+    this._handleCleaner()
   }
 
   abstract render(): string
@@ -52,11 +78,24 @@ export abstract class ComponentPure<TProps = any>
     return this.#props()
   }
 
-  setParent(parent: ComponentStateful | undefined): this {
-    if (this.#parent) return this
+  setSlick(cb: () => boolean): this {
+    this.#slick = cb
+    return this
+  }
 
-    this.#parent = parent
-    this._cleaner()
+  setParent(parent: ComponentStateful | undefined): this {
+    R.ifElse(
+      () => R.not(Boolean(this.#parent)),
+      () => {
+        this.#parent = parent
+
+        this.#eventsSubject.next({
+          event: "setParent",
+        })
+      },
+      R.T,
+    )()
+
     return this
   }
 
@@ -74,8 +113,10 @@ export abstract class ComponentPure<TProps = any>
             this.#host.innerHTML = this.render()
             ;(parentElement as Element).replaceChildren(this.#host)
 
-            requestAnimationFrame(() => {
-              this.onMounted()
+            queueMicrotask(() => {
+              requestAnimationFrame(() => {
+                this.onMounted()
+              })
             })
           },
           R.T,
@@ -85,37 +126,51 @@ export abstract class ComponentPure<TProps = any>
   }
 
   destroy(): void {
-    queueMicrotask(() => {
-      this.onDestroy()
+    R.ifElse(
+      () => this.#unsubscribe.observed,
+      () => {
+        queueMicrotask(() => {
+          this.onDestroy()
+        })
 
-      this.#unsubscribe.next()
-      this.#unsubscribe.complete()
-      this.#unsubscribe = undefined!
-      this.#host = undefined!
-      this.#parent = undefined!
-      this.#props = undefined!
-      this.#id = undefined!
-      this.#idGenerator = undefined!
-      this.#domFinder = undefined!
-    })
+        queueMicrotask(() => {
+          this.#unsubscribe.next()
+          this.#unsubscribe.complete()
+          this.#eventsSubject.complete()
+          this.#host.innerHTML = ""
+        })
+      },
+      R.T,
+    )()
   }
 
-  private _cleaner() {
-    this.#parent!.state.pipe(
-      skip(1),
-      takeUntil(this.#unsubscribe),
-      distinctUntilChanged((previous: any, current: any) =>
-        is(previous, current),
-      ),
-      tap(() => {
-        requestAnimationFrame(() => {
-          R.ifElse(
-            () => R.isNil(this.#domFinder.find(this.parent!.host, this.id)),
-            () => this.destroy(),
-            R.T,
-          )()
-        })
-      }),
-    ).subscribe()
+  private _handleCleaner() {
+    const parentSubscribe = () =>
+      this.#parent!.state.pipe(
+        takeUntil(this.#unsubscribe),
+        skip(1),
+        filter(() => R.not(this.#slick())),
+        distinctUntilChanged((previous: any, current: any) =>
+          is(previous, current),
+        ),
+        tap(() => {
+          requestAnimationFrame(() => {
+            R.ifElse(
+              () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
+              () => this.destroy(),
+              R.T,
+            )()
+          })
+        }),
+      )
+
+    this.#events
+      .pipe(
+        takeUntil(this.#unsubscribe),
+        filter((evt) => R.equals("setParent", evt.event)),
+        take(1),
+        mergeMap(parentSubscribe),
+      )
+      .subscribe()
   }
 }

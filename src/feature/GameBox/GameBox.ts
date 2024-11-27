@@ -1,11 +1,10 @@
-import { FromJS, fromJS, List, Map } from "immutable"
+import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
   filter,
-  fromEvent,
   Observable,
   Subject,
   takeUntil,
@@ -14,21 +13,22 @@ import {
 import { containerApp } from "../../app/compositionRoot/container.js"
 import { TYPES } from "../../app/compositionRoot/types.js"
 import { ComponentBase } from "../../core/framework/Component/index.js"
-import { Children } from "../../core/interface/index.js"
+import { Children, ComponentStateful } from "../../core/interface/index.js"
 import type { Game } from "../../interfaces/index.js"
-import { Button } from "../../shared/components/Button/index.js"
-import { ButtonHeavy } from "../../shared/components/ButtonHeavy/index.js"
-import { delegate } from "../../shared/tools/delegate.js"
-import { ComponentNames } from "./types.js"
-
-interface ElementBtn {
-  component: Children
-}
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { GameBoxStateCountdown } from "./GameBoxStateCountdown.js"
+import { GameBoxStateError } from "./GameBoxStateError.js"
+import { GameBoxStateQuiz } from "./GameBoxStateQuiz.js"
+import { GameBoxStateScore } from "./GameBoxStateScore.js"
+import { GameBoxStateStart } from "./GameBoxStateStart.js"
+import { Step } from "./types.js"
 
 interface State {
-  add: ElementBtn
-  remove: ElementBtn
-  list: [ElementBtn]
+  children: {
+    active: {
+      component: ComponentStateful
+    }
+  }
 }
 
 type StateImm = FromJS<State>
@@ -36,75 +36,76 @@ type StateImm = FromJS<State>
 @injectable()
 export class GameBox extends ComponentBase<any, StateImm> {
   public unsubscribe: Subject<void>
-  public stateSubject: BehaviorSubject<any>
-  public state: Observable<any>
+  public stateSubject: BehaviorSubject<StateImm>
+  public state: Observable<StateImm>
+  public childrenMap: { [K in Step]: () => { component: ComponentStateful } }
 
   constructor(@inject(TYPES.Game) private readonly _game: Game) {
     super()
 
     this.unsubscribe = new Subject<void>()
-    this.stateSubject = new BehaviorSubject<any>(
-      fromJS({
-        add: {
-          component: containerApp.get(Button).setProps(() => ({
-            content: "add",
-            classes: "btn-add",
-          })),
-        },
-        remove: {
-          component: containerApp
-            .get(Button)
-            .setProps(() => ({ content: "remove", classes: "btn-remove" })),
-        },
-        list: [
-          {
-            component: containerApp
-              .get(ButtonHeavy)
-              .setProps(() => ({ content: "abc", classes: "btn" })),
-          },
-          {
-            component: containerApp
-              .get(ButtonHeavy)
-              .setProps(() => ({ content: "abc", classes: "btn" })),
-          },
-        ],
+
+    this.childrenMap = {
+      start: () => ({
+        component: containerApp
+          .get(GameBoxStateStart)
+          .setProps(() => ({ setState: this.setState.bind(this) })),
       }),
-    )
-    this.state = this.stateSubject.asObservable()
 
-    this._handleAdd()
-    this._handleRemove()
-    this._handleError()
-  }
+      countdown: () => ({
+        component: containerApp
+          .get(GameBoxStateCountdown)
+          .setProps(() => ({ setState: this.setState.bind(this) })),
+      }),
 
-  children(): { forEach(cb: (c: Children) => void): void } {
-    return {
-      forEach: (cb: (c: Children) => void) => {
-        const traversal = (c: any) => {
-          if (Map.isMap(c)) {
-            cb(c.get("component") as Children)
-          }
-
-          if (List.isList(c)) {
-            c.forEach((c) => traversal(c))
-          }
-        }
-
-        this.stateSubject.getValue().forEach((c: any) => traversal(c))
-      },
+      quiz: () => ({
+        component: containerApp
+          .get(GameBoxStateQuiz)
+          .setProps(() => ({ setState: this.setState.bind(this) })),
+      }),
+      score: () => ({
+        component: containerApp
+          .get(GameBoxStateScore)
+          .setProps(() => ({ setState: this.setState.bind(this) })),
+      }),
+      error: () => ({
+        component: containerApp
+          .get(GameBoxStateError)
+          .setProps(() => ({ setState: this.setState.bind(this) })),
+      }),
     }
+
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        children: {
+          active: this.childrenMap.start(),
+        },
+      } satisfies State),
+    )
+
+    this.state = this.stateSubject.asObservable()
+    this._handlerError()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
   }
 
-  setState(name: ComponentNames) {
-    console.log(name)
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
-  private _handleError() {
+  setState(name: Step) {
+    this.stateSubject.next(
+      this.stateSubject
+        .getValue()
+        .setIn(["children", "active"], fromJS(this.childrenMap[name]())),
+    )
+  }
+
+  private _handlerError() {
     this._game.error
       .pipe(
         takeUntil(this.unsubscribe),
@@ -120,66 +121,17 @@ export class GameBox extends ComponentBase<any, StateImm> {
       .subscribe()
   }
 
-  private _handleAdd() {
-    fromEvent(document, "click")
-      .pipe(
-        takeUntil(this.unsubscribe),
-        delegate("btn-add"),
-        tap(() => {
-          this.stateSubject.next(
-            this.stateSubject.getValue().setIn(
-              ["list"],
-              this.stateSubject
-                .getValue()
-                .get("list")
-                .push(
-                  fromJS({
-                    component: containerApp.get(ButtonHeavy).setProps(() => ({
-                      content: "New button",
-                      classes: "btn-game-box",
-                    })),
-                  }),
-                ),
-            ),
-          )
-        }),
-      )
-      .subscribe()
-  }
-
-  private _handleRemove() {
-    fromEvent(document, "click")
-      .pipe(
-        takeUntil(this.unsubscribe),
-        delegate("btn-remove"),
-        tap(() =>
-          this.stateSubject.next(
-            this.stateSubject
-              .getValue()
-              .setIn(["list"], this.stateSubject.getValue().get("list").pop()),
-          ),
-        ),
-      )
-      .subscribe()
-  }
-
   render() {
     const template = `
       <div class="header-game-box">
-        <div class="header-game-box__inner">
-          <div data-b-key="{{children.add.component.id}}"></div>
-          <div data-b-key="{{children.remove.component.id}}"></div>
-        </div>
-        <div>
-          {{#children.list}}
-            <div data-b-key="{{component.id}}"></div>
-          {{/children.list}}
-        </div>
+        <div class="header-game-box__inner" data-b-key="{{active.id}}"></div>
       </div>
     `
 
     return M.render(template, {
-      children: this.stateSubject.getValue().toJS(),
+      active: this.stateSubject
+        .getValue()
+        .getIn(["children", "active", "component"]),
     })
   }
 }

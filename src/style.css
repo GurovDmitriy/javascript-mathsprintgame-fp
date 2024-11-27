@@ -116,6 +116,13 @@ legend {
   user-select: none;
 }
 
+.game > div,
+.game > div > div {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 @media (width >= 600px) and (height >= 740px) {
   .game {
     max-width: 600px;
@@ -145,11 +152,14 @@ legend {
   flex-grow: 1;
 }
 
-.header-game-box__inner {
+.header-game-box__inner,
+.header-game-box__inner > div {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+}
 
+.header-game-box__inner > div {
   padding: 0 20px;
 }
 

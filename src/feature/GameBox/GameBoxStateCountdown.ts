@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -12,10 +12,10 @@ import {
   tap,
   timer,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import type { Remote } from "../../interfaces"
-import { GameBoxContext } from "./types"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import type { Remote } from "../../interfaces/index.js"
+import { GameBoxContext } from "./types.js"
 
 interface State {
   timer: number
@@ -43,20 +43,14 @@ export class GameBoxStateCountdown extends ComponentBase<
     )
 
     this.state = this.stateSubject.asObservable()
-  }
 
-  getState() {
-    return this.stateSubject.getValue()
+    this._handleTimer()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
-  }
-
-  onMounted() {
-    console.log("mout timer")
-    this._handleTimer()
+    this.stateSubject.complete()
   }
 
   private _handleTimer() {
@@ -78,7 +72,7 @@ export class GameBoxStateCountdown extends ComponentBase<
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
@@ -97,7 +91,7 @@ export class GameBoxStateCountdown extends ComponentBase<
               >
                 <legend class="fieldset__legend">Countdown</legend>
                 <div class="countdown fieldset__countdown">
-                  <h3 class="countdown__caption">{{state.timer}}</h3>
+                  <h3 class="countdown__caption">{{timer}}</h3>
                   <div class="contdown__control-table-box">
                     <table class="control-table coutdown__control-table">
                       <tr>
@@ -183,8 +177,10 @@ export class GameBoxStateCountdown extends ComponentBase<
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
         </section>
       </header>
-    `)
+    `
 
-    return template({ state: this.stateSubject.getValue().toJS() })
+    return M.render(template, {
+      timer: this.stateSubject.getValue().get("timer"),
+    })
   }
 }

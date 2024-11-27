@@ -5,6 +5,7 @@ export interface ComponentStateless<TProps = any> {
   host: Element
   parent: ComponentStateful | undefined
   props: TProps
+  setSlick(cb: () => boolean): this
   setProps(cb: () => TProps): this
   setParent(parent: ComponentStateful | undefined): this
   mount(): void

@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { fromJS, FromJS } from "immutable"
 import { injectable } from "inversify"
+import M from "mustache"
 import {
   BehaviorSubject,
   fromEvent,
@@ -9,15 +9,25 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { ComponentBase } from "../../core/framework/Component"
-import type { ErrorInfo } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { delegate } from "../../shared/tools/delegate"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type { ErrorInfo } from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { delegate } from "../../shared/tools/delegate.js"
 
-interface State {}
 interface Props {
   error: ErrorInfo
   reset: () => void
+}
+
+interface State {
+  children: {
+    btn: {
+      component: Button
+    }
+  }
 }
 
 type StateImm = FromJS<State>
@@ -28,29 +38,38 @@ export class ErrorGlobal extends ComponentBase<Props, StateImm> {
   public stateSubject: BehaviorSubject<StateImm>
   public state: Observable<StateImm>
 
-  constructor(public readonly btn: Button) {
+  constructor() {
     super()
 
     this.unsubscribe = new Subject<void>()
-    this.stateSubject = new BehaviorSubject<StateImm>(fromJS({}))
+    this.stateSubject = new BehaviorSubject<StateImm>(
+      fromJS({
+        children: {
+          btn: {
+            component: containerApp.get(Button).setProps(() => ({
+              content: "Reload",
+              classes: "error-global-btn",
+            })),
+          },
+        },
+      }),
+    )
     this.state = this.stateSubject.asObservable()
-  }
 
-  onCreate() {
-    this._setProps()
     this._reload()
   }
 
-  onMounted() {
-    this._reload()
+  onDestroy() {
+    this.unsubscribe.next()
+    this.unsubscribe.complete()
   }
 
-  private _setProps() {
-    this.btn.setProps({ content: "Reload", classes: "error-global-btn" })
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
   private _reload() {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("error-global-btn"),
@@ -62,22 +81,20 @@ export class ErrorGlobal extends ComponentBase<Props, StateImm> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <div class="header-game-box">
         <div class="header-game-box__inner">
           <p class="header-game-box__error-global">{{message}}</p>
         </div>
         <div>
-           <div class="header-game-box__error-global-btn">
-             {{{btn}}}
-           </div>
+           <div class="header-game-box__error-global-btn" data-b-key="{{btn.id}}"></div>
         </div>
       </div>
-    `)
+    `
 
-    return template({
+    return M.render(template, {
       message: this.props.error.message,
-      btn: this.btn.render(),
+      btn: this.stateSubject.getValue().getIn(["children", "btn", "component"]),
     })
   }
 }

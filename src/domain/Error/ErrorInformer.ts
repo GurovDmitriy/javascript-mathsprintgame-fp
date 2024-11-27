@@ -1,12 +1,17 @@
 import { injectable } from "inversify"
 import * as R from "ramda"
 import { BehaviorSubject, Observable, tap } from "rxjs"
-import { RootCreator } from "../../core/framework/RootCreator"
-import { ErrorGlobal } from "../../feature/ErrorGlobal/ErrorGlobal"
-import { ErrorCustom, ErrorGlobalHandler, ErrorInfo } from "../../interfaces"
+import { RootCreator } from "../../core/framework/RootCreator/index.js"
+import { ErrorGlobal } from "../../feature/ErrorGlobal/index.js"
+import {
+  ErrorCustom,
+  ErrorGlobalHandler,
+  ErrorInfo,
+} from "../../interfaces/index.js"
 
 type StateError = ErrorCustom | null
 
+// TODO: create instance children
 @injectable()
 export class ErrorInformer implements ErrorGlobalHandler {
   private readonly _errorSubject: BehaviorSubject<StateError>
@@ -40,10 +45,10 @@ export class ErrorInformer implements ErrorGlobalHandler {
             (error: ErrorInfo | null) => R.not(R.equals(error, null)),
             (error) => {
               const root = document.getElementById("root")
-              this._errorGlobal.setProps({
+              this._errorGlobal.setProps(() => ({
                 error: error as ErrorInfo,
                 reset: this.reset,
-              })
+              }))
               if (root) this._rootCreator.render(root, () => this._errorGlobal)
             },
             R.T,

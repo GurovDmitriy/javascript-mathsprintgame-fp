@@ -1,8 +1,8 @@
 import { Container } from "inversify"
-import { ComponentId, ElementFinder, Sweeper } from "../framework/Component"
-import { RootCreator } from "../framework/RootCreator"
-import type { Cleaner, DomFinder, IdGenerator, RootRender } from "../interface"
-import { TYPES } from "./types"
+import { ComponentId, ElementFinder } from "../framework/Component/index.js"
+import { RootCreator } from "../framework/RootCreator/index.js"
+import type { DomFinder, IdGenerator, RootRender } from "../interface/index.js"
+import { TYPES } from "./types.js"
 
 const container = new Container({
   autoBindInjectable: true,
@@ -10,14 +10,7 @@ const container = new Container({
 })
 
 container.bind<RootRender>(TYPES.RootCreator).to(RootCreator)
-container
-  .bind<IdGenerator>(TYPES.ComponentId)
-  .to(ComponentId)
-  .inSingletonScope()
-container
-  .bind<DomFinder>(TYPES.ElementFinder)
-  .to(ElementFinder)
-  .inSingletonScope()
-container.bind<Cleaner>(TYPES.Sweeper).to(Sweeper).inSingletonScope()
+container.bind<IdGenerator>(TYPES.ComponentId).to(ComponentId)
+container.bind<DomFinder>(TYPES.ElementFinder).to(ElementFinder)
 
 export { container }

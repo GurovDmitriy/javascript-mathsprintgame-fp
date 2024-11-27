@@ -4,7 +4,7 @@ import type {
   ErrorCode,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces"
+} from "../../interfaces/index.js"
 
 @injectable()
 export class ErrorHeavy extends Error implements ErrorBase {

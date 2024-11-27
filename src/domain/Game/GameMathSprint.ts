@@ -15,7 +15,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
+import { TYPES } from "../../app/compositionRoot/types.js"
 import type {
   ErrorBase,
   ErrorCode,
@@ -28,9 +28,9 @@ import type {
   GameResult,
   GameScore,
   GameState,
-} from "../../interfaces"
-import { fixedNum } from "../../shared/tools/fixedNum"
-import { GAME_ERROR_CODE } from "./types"
+} from "../../interfaces/index.js"
+import { fixedNum } from "../../shared/tools/fixedNum.js"
+import { GAME_ERROR_CODE } from "./types.js"
 
 type GameStateImm = FromJS<GameState>
 

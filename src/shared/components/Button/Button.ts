@@ -22,6 +22,4 @@ export class Button extends ComponentPure<Props> {
 
     return mustache.render(template, this.props)
   }
-
-  children(): void {}
 }

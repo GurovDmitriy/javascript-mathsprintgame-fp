@@ -1,6 +1,6 @@
-import { compile } from "handlebars"
 import { FromJS, fromJS } from "immutable"
 import { inject, injectable } from "inversify"
+import M from "mustache"
 import * as R from "ramda"
 import {
   BehaviorSubject,
@@ -11,15 +11,24 @@ import {
   Observable,
   of,
   Subject,
+  take,
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types"
-import { ComponentBase } from "../../core/framework/Component"
-import type { ErrorHandler, Game, GameEquation, Remote } from "../../interfaces"
-import { Button } from "../../shared/components/Button"
-import { delegate } from "../../shared/tools/delegate"
-import { GameBoxContext } from "./types"
+import { containerApp } from "../../app/compositionRoot/container.js"
+import { TYPES } from "../../app/compositionRoot/types.js"
+import { ComponentBase } from "../../core/framework/Component/index.js"
+import { Children } from "../../core/interface/index.js"
+import type {
+  ErrorHandler,
+  Game,
+  GameEquation,
+  Remote,
+} from "../../interfaces/index.js"
+import { Button } from "../../shared/components/Button/index.js"
+import { childrenIterator } from "../../shared/tools/childrenIterator.js"
+import { delegate } from "../../shared/tools/delegate.js"
+import { GameBoxContext } from "./types.js"
 
 interface State {
   equations: {
@@ -28,6 +37,14 @@ interface State {
     result: number
     classActive: string
   }[]
+  children: {
+    btnRight: {
+      component: Button
+    }
+    btnWrong: {
+      component: Button
+    }
+  }
 }
 
 type StateImm = FromJS<State>
@@ -42,8 +59,6 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
     @inject(TYPES.ErrorHandler) private _errorHandler: ErrorHandler,
     @inject(TYPES.Game) private _game: Game,
     @inject(TYPES.Remote) private _remote: Remote,
-    public btnRight: Button,
-    public btnWrong: Button,
   ) {
     super()
 
@@ -52,39 +67,42 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
     this.stateSubject = new BehaviorSubject<StateImm>(
       fromJS({
         equations: [],
+        children: {
+          btnRight: {
+            component: containerApp.get(Button).setProps(() => ({
+              classes: "btn--right btn-quiz-box__btn",
+              content: "Right",
+            })),
+          },
+          btnWrong: {
+            component: containerApp.get(Button).setProps(() => ({
+              classes: "btn--wrong btn-quiz-box__btn",
+              content: "Wrong",
+            })),
+          },
+        },
       }),
     )
 
     this.state = this.stateSubject.asObservable()
 
-    this._handleSetProps()
     this._handleAnswerActive()
     this._handleToggleState()
-  }
-
-  onMounted() {
     this._handleBtnAnswer()
   }
 
   onDestroy() {
     this.unsubscribe.next()
     this.unsubscribe.complete()
+    this.stateSubject.complete()
   }
 
   onUpdated() {
     this._handleScrollContainer()
   }
 
-  private _handleSetProps() {
-    this.btnWrong.setProps({
-      classes: "btn--wrong btn-quiz-box__btn",
-      content: "Wrong",
-    })
-
-    this.btnRight.setProps({
-      classes: "btn--right btn-quiz-box__btn",
-      content: "Right",
-    })
+  children(): { forEach: (cb: (c: Children) => void) => void } {
+    return childrenIterator(this.stateSubject)
   }
 
   private _handleAnswerActive() {
@@ -120,6 +138,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
         filter((data) => {
           return R.equals(data.get("end") as unknown as boolean, true)
         }),
+        take(1),
         tap(() => {
           this.props.setState("score")
         }),
@@ -128,7 +147,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleBtnAnswer() {
-    fromEvent(document, "click")
+    fromEvent(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn-quiz-box__btn"),
@@ -165,7 +184,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   render() {
-    const template = compile(`
+    const template = `
       <header class="header game__header">
         <h1 class="header__caption">Math Sprint Game</h1>
 
@@ -180,11 +199,11 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
             <!-- quiz view -->
               <div class="quiz fieldset__quiz">
                 <div>
-                  {{#each state.equations}}
-                  <p class="quiz__item {{this.classActive}}">
-                     {{this.left}} <span>x</span> {{this.right}} <span>=</span> {{this.result}}
+                  {{#state.equations}}
+                  <p class="quiz__item {{classActive}}">
+                     {{left}} <span>x</span> {{right}} <span>=</span> {{result}}
                   </p>
-                  {{/each}}
+                  {{/state.equations}}
                 </div>
               </div>
             </div>
@@ -197,17 +216,15 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
         <section class="btn-box form__btn-box">
           <h2 class="btn-box__caption visually-hidden">Play Buttons</h2>
            <div class="btn-quiz-box btn-box__btn-quiz-box">
-             {{{btnWrong}}}
-             {{{btnRight}}}
+             <div data-b-key="{{state.children.btnWrong.component.id}}"></div>
+             <div data-b-key="{{state.children.btnRight.component.id}}"></div>
           </div>
         </section>
       </header>
-    `)
+    `
 
-    return template({
+    return M.render(template, {
       state: this.stateSubject.getValue().toJS(),
-      btnWrong: this.btnWrong.render(),
-      btnRight: this.btnRight.render(),
     })
   }
 }

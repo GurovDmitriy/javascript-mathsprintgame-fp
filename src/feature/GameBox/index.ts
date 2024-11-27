@@ -1,1 +1,1 @@
-export * from "./GameBox"
+export * from "./GameBox.js"

@@ -1,3 +1,3 @@
-export * from "./GameMathSprint"
-export * from "./GameRemote"
-export * from "./types"
+export * from "./GameMathSprint.js"
+export * from "./GameRemote.js"
+export * from "./types.js"
