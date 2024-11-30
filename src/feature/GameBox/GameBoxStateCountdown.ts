@@ -12,10 +12,10 @@ import {
   tap,
   timer,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types.js"
-import { ComponentBase } from "../../core/framework/Component/index.js"
-import type { Remote } from "../../interfaces/index.js"
-import { GameBoxContext } from "./types.js"
+import { TYPES } from "../../app/compositionRoot/types.ts"
+import { ComponentBase } from "../../core/framework/Component/index.ts"
+import type { Remote } from "../../interfaces/index.ts"
+import { GameBoxContext } from "./types.ts"
 
 interface State {
   timer: number

@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import type { DomFinder } from "../../interface/index.js"
+import type { DomFinder } from "../../interface/index.ts"
 
 @injectable()
 export class ElementFinder implements DomFinder {

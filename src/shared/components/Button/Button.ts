@@ -1,6 +1,6 @@
 import { injectable } from "inversify"
 import mustache from "mustache"
-import { ComponentPure } from "../../../core/framework/Component/index.js"
+import { ComponentPure } from "../../../core/framework/Component/index.ts"
 
 interface Props {
   content: string

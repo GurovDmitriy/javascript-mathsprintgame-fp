@@ -1,5 +1,5 @@
 import { List, Map } from "immutable"
-import { Children } from "../../core/interface/index.js"
+import { Children } from "../../core/interface/index.ts"
 
 export function childrenIterator(stateSubject: any): {
   forEach: (cb: (c: Children) => void) => void

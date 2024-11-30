@@ -1,1 +1,1 @@
-export * from "./ElementFinder.js"
+export * from "./ElementFinder.ts"

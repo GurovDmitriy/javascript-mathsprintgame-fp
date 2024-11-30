@@ -1,3 +1,3 @@
-export * from "./Error/index.js"
-export * from "./Game/index.js"
-export * from "./Remote/index.js"
+export * from "./Error/index.ts"
+export * from "./Game/index.ts"
+export * from "./Remote/index.ts"

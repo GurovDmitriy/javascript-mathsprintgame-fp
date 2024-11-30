@@ -12,14 +12,14 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { container } from "../../compositionRoot/container.js"
-import { TYPES } from "../../compositionRoot/types.js"
+import { container } from "../../compositionRoot/container.ts"
+import { TYPES } from "../../compositionRoot/types.ts"
 import type {
   Children,
   ComponentStateful,
   DomFinder,
   IdGenerator,
-} from "../../interface/index.js"
+} from "../../interface/index.ts"
 
 type Event = EventSetParent | EventMount | EventDestroy
 

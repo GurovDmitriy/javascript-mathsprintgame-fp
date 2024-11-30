@@ -10,18 +10,18 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { containerApp } from "../../app/compositionRoot/container.js"
-import { TYPES } from "../../app/compositionRoot/types.js"
-import { ComponentBase } from "../../core/framework/Component/index.js"
-import { Children, ComponentStateful } from "../../core/interface/index.js"
-import type { Game } from "../../interfaces/index.js"
-import { childrenIterator } from "../../shared/tools/childrenIterator.js"
-import { GameBoxStateCountdown } from "./GameBoxStateCountdown.js"
-import { GameBoxStateError } from "./GameBoxStateError.js"
-import { GameBoxStateQuiz } from "./GameBoxStateQuiz.js"
-import { GameBoxStateScore } from "./GameBoxStateScore.js"
-import { GameBoxStateStart } from "./GameBoxStateStart.js"
-import { Step } from "./types.js"
+import { containerApp } from "../../app/compositionRoot/container.ts"
+import { TYPES } from "../../app/compositionRoot/types.ts"
+import { ComponentBase } from "../../core/framework/Component/index.ts"
+import { Children, ComponentStateful } from "../../core/interface/index.ts"
+import type { Game } from "../../interfaces/index.ts"
+import { childrenIterator } from "../../shared/tools/childrenIterator.ts"
+import { GameBoxStateCountdown } from "./GameBoxStateCountdown.ts"
+import { GameBoxStateError } from "./GameBoxStateError.ts"
+import { GameBoxStateQuiz } from "./GameBoxStateQuiz.ts"
+import { GameBoxStateScore } from "./GameBoxStateScore.ts"
+import { GameBoxStateStart } from "./GameBoxStateStart.ts"
+import { Step } from "./types.ts"
 
 interface State {
   children: {

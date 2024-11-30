@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify"
 import * as R from "ramda"
-import { TYPES } from "../../app/compositionRoot/types.js"
+import { TYPES } from "../../app/compositionRoot/types.ts"
 import type {
   ErrorBase,
   ErrorCode,
@@ -12,13 +12,14 @@ import type {
   ErrorInfo,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces/index.js"
-import { ErrorHeavy } from "./ErrorHeavy.js"
-import { ErrorLight } from "./ErrorLight.js"
+} from "../../interfaces/index.ts"
+import { ErrorHeavy } from "./ErrorHeavy.ts"
+import { ErrorLight } from "./ErrorLight.ts"
 
 @injectable()
 export class ErrorService implements ErrorHandler {
   constructor(
+    @inject(TYPES.ErrorConfig) private _errorConfig: ErrorConfig,
     @inject(TYPES.ErrorGlobalHandler)
     private _errorGlobalHandler: ErrorGlobalHandler,
     @inject(TYPES.ErrorReadableFactory)
@@ -27,7 +28,6 @@ export class ErrorService implements ErrorHandler {
       code?: ErrorCode,
       status?: ErrorStatus,
     ) => ErrorInfo,
-    @inject(TYPES.ErrorConfig) private _errorConfig: ErrorConfig,
   ) {}
 
   handle(error: ErrorCustom | null): ErrorInfo | null {
@@ -127,9 +127,5 @@ export class ErrorService implements ErrorHandler {
 
   private _isErrorBase(error: ErrorCustom): error is ErrorBase {
     return error instanceof ErrorLight || error instanceof ErrorHeavy
-  }
-
-  private _isErrorDefault(error: ErrorCustom): error is ErrorDefault {
-    return error instanceof Error
   }
 }

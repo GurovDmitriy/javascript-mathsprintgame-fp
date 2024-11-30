@@ -1,6 +1,6 @@
 import { injectable } from "inversify"
 import { nanoid } from "nanoid/non-secure"
-import { IdGenerator } from "../../interface/index.js"
+import { IdGenerator } from "../../interface/index.ts"
 
 @injectable()
 export class ComponentId implements IdGenerator {

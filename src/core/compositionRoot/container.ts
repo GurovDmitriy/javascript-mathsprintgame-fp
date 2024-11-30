@@ -1,8 +1,8 @@
 import { Container } from "inversify"
-import { ComponentId, ElementFinder } from "../framework/Component/index.js"
-import { RootCreator } from "../framework/RootCreator/index.js"
-import type { DomFinder, IdGenerator, RootRender } from "../interface/index.js"
-import { TYPES } from "./types.js"
+import { ComponentId, ElementFinder } from "../framework/Component/index.ts"
+import { RootCreator } from "../framework/RootCreator/index.ts"
+import type { DomFinder, IdGenerator, RootRender } from "../interface/index.ts"
+import { TYPES } from "./types.ts"
 
 const container = new Container({
   autoBindInjectable: true,

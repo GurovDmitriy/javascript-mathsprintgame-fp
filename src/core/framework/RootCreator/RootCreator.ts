@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify"
 import { from } from "rxjs"
-import { TYPES } from "../../compositionRoot/types.js"
+import { TYPES } from "../../compositionRoot/types.ts"
 import type {
   ComponentStateful,
   DomFinder,
   RootRender,
-} from "../../interface/index.js"
+} from "../../interface/index.ts"
 
 @injectable()
 export class RootCreator implements RootRender {

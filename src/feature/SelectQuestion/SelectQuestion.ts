@@ -14,10 +14,10 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types.js"
-import { ComponentBase } from "../../core/framework/Component/index.js"
-import type { ErrorHandler, Game, Remote } from "../../interfaces/index.js"
-import { delegate } from "../../shared/tools/delegate.js"
+import { TYPES } from "../../app/compositionRoot/types.ts"
+import { ComponentBase } from "../../core/framework/Component/index.ts"
+import type { ErrorHandler, Game, Remote } from "../../interfaces/index.ts"
+import { delegate } from "../../shared/tools/delegate.ts"
 
 interface State {
   questions: { classSelected: string; value: number; record: number }[]

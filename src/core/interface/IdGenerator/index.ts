@@ -1,1 +1,1 @@
-export * from "./IdGenerator.js"
+export * from "./IdGenerator.ts"

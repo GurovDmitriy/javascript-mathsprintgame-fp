@@ -1,8 +1,8 @@
 import { Container, interfaces } from "inversify"
-import { container } from "../../core/compositionRoot/container.js"
-import { TYPES as TYPES_BRAINFUL } from "../../core/compositionRoot/types.js"
-import { IdGenerator } from "../../core/interface/index.js"
-import { ErrorInformer } from "../../domain/Error/ErrorInformer.js"
+import { container } from "../../core/compositionRoot/container.ts"
+import { TYPES as TYPES_BRAINFUL } from "../../core/compositionRoot/types.ts"
+import { IdGenerator } from "../../core/interface/index.ts"
+import { ErrorInformer } from "../../domain/Error/ErrorInformer.ts"
 import {
   ErrorHeavy,
   ErrorLight,

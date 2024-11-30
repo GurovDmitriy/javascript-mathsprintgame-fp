@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Children } from "./Children.js"
+import { Children } from "./Children.ts"
 
 export interface ComponentStateful<TProps = any, TState = any> {
   id: string

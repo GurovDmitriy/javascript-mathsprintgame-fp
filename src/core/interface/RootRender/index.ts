@@ -1,1 +1,1 @@
-export * from "./RootRender.js"
+export * from "./RootRender.ts"

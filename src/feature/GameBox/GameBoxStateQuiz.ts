@@ -15,20 +15,20 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { containerApp } from "../../app/compositionRoot/container.js"
-import { TYPES } from "../../app/compositionRoot/types.js"
-import { ComponentBase } from "../../core/framework/Component/index.js"
-import { Children } from "../../core/interface/index.js"
+import { containerApp } from "../../app/compositionRoot/container.ts"
+import { TYPES } from "../../app/compositionRoot/types.ts"
+import { ComponentBase } from "../../core/framework/Component/index.ts"
+import { Children } from "../../core/interface/index.ts"
 import type {
   ErrorHandler,
   Game,
   GameEquation,
   Remote,
-} from "../../interfaces/index.js"
-import { Button } from "../../shared/components/Button/index.js"
-import { childrenIterator } from "../../shared/tools/childrenIterator.js"
-import { delegate } from "../../shared/tools/delegate.js"
-import { GameBoxContext } from "./types.js"
+} from "../../interfaces/index.ts"
+import { Button } from "../../shared/components/Button/index.ts"
+import { childrenIterator } from "../../shared/tools/childrenIterator.ts"
+import { delegate } from "../../shared/tools/delegate.ts"
+import { GameBoxContext } from "./types.ts"
 
 interface State {
   equations: {

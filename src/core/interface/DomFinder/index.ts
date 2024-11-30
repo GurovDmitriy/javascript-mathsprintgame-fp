@@ -1,1 +1,1 @@
-export * from "./DomFinder.js"
+export * from "./DomFinder.ts"

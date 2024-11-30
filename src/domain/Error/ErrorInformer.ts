@@ -1,13 +1,13 @@
 import { injectable } from "inversify"
 import * as R from "ramda"
 import { BehaviorSubject, Observable, tap } from "rxjs"
-import { RootCreator } from "../../core/framework/RootCreator/index.js"
-import { ErrorGlobal } from "../../feature/ErrorGlobal/index.js"
+import { RootCreator } from "../../core/framework/RootCreator/index.ts"
+import { ErrorGlobal } from "../../feature/ErrorGlobal/index.ts"
 import {
   ErrorCustom,
   ErrorGlobalHandler,
   ErrorInfo,
-} from "../../interfaces/index.js"
+} from "../../interfaces/index.ts"
 
 type StateError = ErrorCustom | null
 

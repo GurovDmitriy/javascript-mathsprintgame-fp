@@ -1,28 +1,28 @@
 import { inject, injectable } from "inversify"
-import { TYPES } from "../../app/compositionRoot/types.js"
-import type { Game, Remote } from "../../interfaces/index.js"
+import { TYPES } from "../../app/compositionRoot/types.ts"
+import type { Game, Remote } from "../../interfaces/index.ts"
 
 @injectable()
 export class GameRemote implements Remote {
   constructor(@inject(TYPES.Game) private _game: Game) {}
 
-  choice(value: number) {
+  choice(value: number): void {
     this._game.choice(value)
   }
 
-  start() {
+  start(): void {
     this._game.play()
   }
 
-  replay() {
+  replay(): void {
     this._game.reset()
   }
 
-  wrong() {
+  wrong(): void {
     this._game.markWrong()
   }
 
-  right() {
+  right(): void {
     this._game.markRight()
   }
 }

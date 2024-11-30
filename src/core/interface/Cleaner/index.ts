@@ -1,1 +1,1 @@
-export * from "./Cleaner.js"
+export * from "./Cleaner.ts"

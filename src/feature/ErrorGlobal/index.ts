@@ -1,1 +1,1 @@
-export * from "./ErrorGlobal.js"
+export * from "./ErrorGlobal.ts"

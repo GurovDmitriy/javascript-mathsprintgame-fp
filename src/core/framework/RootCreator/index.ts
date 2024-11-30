@@ -1,1 +1,1 @@
-export * from "./RootCreator.js"
+export * from "./RootCreator.ts"

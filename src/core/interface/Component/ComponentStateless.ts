@@ -1,4 +1,4 @@
-import { ComponentStateful } from "./ComponentStateful.js"
+import { ComponentStateful } from "./ComponentStateful.ts"
 
 export interface ComponentStateless<TProps = any> {
   id: string

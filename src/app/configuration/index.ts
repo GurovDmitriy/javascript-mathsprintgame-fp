@@ -1,2 +1,2 @@
-export * from "./ErrorConfiguration.js"
-export * from "./GameConfiguration.js"
+export * from "./ErrorConfiguration.ts"
+export * from "./GameConfiguration.ts"

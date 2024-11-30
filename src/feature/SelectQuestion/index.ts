@@ -1,1 +1,1 @@
-export * from "./SelectQuestion.js"
+export * from "./SelectQuestion.ts"

@@ -1,3 +1,3 @@
-export * from "./Children.js"
-export * from "./ComponentStateful.js"
-export * from "./ComponentStateless.js"
+export * from "./Children.ts"
+export * from "./ComponentStateful.ts"
+export * from "./ComponentStateless.ts"

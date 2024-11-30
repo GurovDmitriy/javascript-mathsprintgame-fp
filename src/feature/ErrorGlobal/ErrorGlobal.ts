@@ -9,13 +9,13 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { containerApp } from "../../app/compositionRoot/container.js"
-import { ComponentBase } from "../../core/framework/Component/index.js"
-import { Children } from "../../core/interface/index.js"
-import type { ErrorInfo } from "../../interfaces/index.js"
-import { Button } from "../../shared/components/Button/index.js"
-import { childrenIterator } from "../../shared/tools/childrenIterator.js"
-import { delegate } from "../../shared/tools/delegate.js"
+import { containerApp } from "../../app/compositionRoot/container.ts"
+import { ComponentBase } from "../../core/framework/Component/index.ts"
+import { Children } from "../../core/interface/index.ts"
+import type { ErrorInfo } from "../../interfaces/index.ts"
+import { Button } from "../../shared/components/Button/index.ts"
+import { childrenIterator } from "../../shared/tools/childrenIterator.ts"
+import { delegate } from "../../shared/tools/delegate.ts"
 
 interface Props {
   error: ErrorInfo

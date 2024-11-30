@@ -1,6 +1,6 @@
 import { injectable } from "inversify"
-import { GAME_ERROR_CODE } from "../../domain/Game/index.js"
-import { type ErrorConfig, ErrorConfigMap } from "../../interfaces/index.js"
+import { GAME_ERROR_CODE } from "../../domain/Game/index.ts"
+import { type ErrorConfig, ErrorConfigMap } from "../../interfaces/index.ts"
 
 @injectable()
 export class ErrorConfiguration implements ErrorConfig {

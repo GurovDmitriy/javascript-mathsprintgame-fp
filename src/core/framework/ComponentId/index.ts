@@ -1,1 +1,1 @@
-export * from "./ComponentId.js"
+export * from "./ComponentId.ts"

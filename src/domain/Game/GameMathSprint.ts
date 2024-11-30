@@ -3,8 +3,6 @@ import { inject, injectable } from "inversify"
 import * as R from "ramda"
 import {
   BehaviorSubject,
-  catchError,
-  debounceTime,
   distinctUntilChanged,
   filter,
   Observable,
@@ -15,7 +13,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { TYPES } from "../../app/compositionRoot/types.js"
+import { TYPES } from "../../app/compositionRoot/types.ts"
 import type {
   ErrorBase,
   ErrorCode,
@@ -28,9 +26,9 @@ import type {
   GameResult,
   GameScore,
   GameState,
-} from "../../interfaces/index.js"
-import { fixedNum } from "../../shared/tools/fixedNum.js"
-import { GAME_ERROR_CODE } from "./types.js"
+} from "../../interfaces/index.ts"
+import { fixedNum } from "../../shared/tools/fixedNum.ts"
+import { GAME_ERROR_CODE } from "./types.ts"
 
 type GameStateImm = FromJS<GameState>
 
@@ -38,7 +36,6 @@ type GameStateImm = FromJS<GameState>
 export class GameMathSprint implements Game {
   private _stateSubject: BehaviorSubject<GameStateImm>
   private _errorSubject: BehaviorSubject<ErrorCustom | null>
-  private _choiceSubject: Subject<number>
   private _unsubscribe: Subject<void>
 
   public config: FromJS<GameConfig>
@@ -82,15 +79,6 @@ export class GameMathSprint implements Game {
     )
     this.state = this._stateSubject.asObservable()
 
-    this._choiceSubject = new Subject<number>()
-    this._choiceSubject
-      .pipe(
-        takeUntil(this._unsubscribe),
-        debounceTime(200),
-        tap((value) => this._handleChoice(value)),
-      )
-      .subscribe()
-
     this.config = this._getConfig(config)
     this._handleScore()
   }
@@ -99,7 +87,7 @@ export class GameMathSprint implements Game {
     R.tryCatch(
       R.pipe(
         (state) => this._handleIfExistError(state),
-        (value) => this._choiceSubject.next(value),
+        (value) => this._handleChoice(value),
       ),
       (error) => this._errorSubject.next(error),
     )(value)
@@ -310,10 +298,6 @@ export class GameMathSprint implements Game {
           )
         }),
         tap(R.pipe(calcResultAndScore, updateState)),
-        catchError((error) => {
-          this._errorSubject.next(error)
-          return of(error)
-        }),
       )
       .subscribe()
   }
