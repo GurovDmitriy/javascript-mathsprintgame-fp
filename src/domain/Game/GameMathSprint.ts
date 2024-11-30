@@ -271,18 +271,19 @@ export class GameMathSprint implements Game {
         R.equals(previous.get("end"), current.get("end")),
       )
 
-    const setStartEndTime = (acc: GameStateImm, curr: GameStateImm) =>
-      R.cond([
+    const setStartEndTime = (acc: GameStateImm, curr: GameStateImm) => {
+      return R.cond([
         [
-          ({ curr, acc }) => R.and(curr.get("active"), !acc.start),
+          ({ curr }) => R.and(curr.get("active"), R.not(curr.get("end"))),
           ({ acc }) => ({ ...acc, start: Date.now() }),
         ],
         [
-          ({ curr }) => R.equals(curr.get("end"), true),
+          ({ curr }) => curr.get("end"),
           ({ acc }) => ({ ...acc, end: Date.now() }),
         ],
         [R.T, ({ acc }) => acc],
       ])({ acc, curr })
+    }
 
     const calcResultAndScore = (state: typeof stateInit) =>
       this._getResultAndScore(state.start, state.end)
@@ -343,41 +344,77 @@ export class GameMathSprint implements Game {
       () => this.config.get("penalty") as number,
     ) satisfies (ge: GameEquation) => number
 
-    const record = R.ifElse(
+    const record = R.cond([
+      [
+        (state: typeof stateInit) => R.isNil(state.score[state.questionValue]),
+        (state: typeof stateInit) => state.result.total,
+      ],
+      [
+        (state: typeof stateInit) =>
+          R.gt(state.score[state.questionValue], state.result.total),
+        (state: typeof stateInit) => state.result.total,
+      ],
+      [R.T, (state: typeof stateInit) => state.score[state.questionValue]],
+    ])
+
+    const ifEndGame = (state: typeof stateInit) => Boolean(state.end)
+    const ifNotEndGame = (state: typeof stateInit) => state
+
+    const setPenalty = R.ifElse(
+      ifEndGame,
       (state: typeof stateInit) =>
-        R.gt(state.score[state.questionValue], state.result.total),
-      (state: typeof stateInit) => state.score[state.questionValue],
-      (state: typeof stateInit) => state.result.total,
+        R.assocPath(
+          ["result", "penalty"],
+          R.pipe(
+            (state: typeof stateInit) => state.equations,
+            R.map((ge) => penaltyByAnswer(ge)),
+            R.reduce(R.add, 0),
+          )(state),
+          state,
+        ),
+      ifNotEndGame,
     )
 
-    const setPenalty = (state: typeof stateInit) =>
-      R.assocPath(
-        ["result", "penalty"],
-        R.pipe(
-          (state: typeof stateInit) => state.equations,
-          R.map((ge) => penaltyByAnswer(ge)),
-          R.reduce(R.add, 0),
-        )(state),
-        state,
-      )
-
-    const setTotal = (state: typeof stateInit) =>
-      R.assocPath(
-        ["result", "total"],
-        fixedNum(4)(
-          R.divide(
-            R.add(R.subtract(state.end, state.start), state.result.penalty),
-            1000,
+    const setTotal = R.ifElse(
+      ifEndGame,
+      (state: typeof stateInit) =>
+        R.assocPath(
+          ["result", "total"],
+          this._getFormatTime()(
+            R.divide(
+              R.add(
+                Math.abs(R.subtract(state.end, state.start)),
+                state.result.penalty,
+              ),
+              1000,
+            ),
           ),
+          state,
         ),
-        state,
-      )
+      ifNotEndGame,
+    )
 
-    const setBase = (state: typeof stateInit) =>
-      R.assocPath(["result", "base"], R.subtract(state.end, state.start), state)
+    const setBase = R.ifElse(
+      ifEndGame,
+      (state: typeof stateInit) =>
+        R.assocPath(
+          ["result", "base"],
+          Math.abs(R.subtract(state.end, state.start)),
+          state,
+        ),
+      ifNotEndGame,
+    )
 
-    const setScore = (state: typeof stateInit) =>
-      R.assocPath(["score", String(state.questionValue)], record(state), state)
+    const setScore = R.ifElse(
+      ifEndGame,
+      (state: typeof stateInit) =>
+        R.assocPath(
+          ["score", String(state.questionValue)],
+          record(state),
+          state,
+        ),
+      ifNotEndGame,
+    )
 
     return R.pipe(
       setPenalty,
@@ -506,8 +543,8 @@ export class GameMathSprint implements Game {
     )(stateInit)
   }
 
-  private _getFormatTime(value: number): number {
-    return fixedNum(4, value)
+  private _getFormatTime(): (n: number) => number {
+    return fixedNum(4)
   }
 }
 

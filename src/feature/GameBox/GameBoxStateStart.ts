@@ -73,6 +73,7 @@ export class GameBoxStateStart extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   onDestroy() {
+    console.log("on destroy")
     this.unsubscribe.next()
     this.unsubscribe.complete()
     this.stateSubject.complete()

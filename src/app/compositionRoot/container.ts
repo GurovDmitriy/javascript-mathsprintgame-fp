@@ -1,5 +1,7 @@
 import { Container, interfaces } from "inversify"
 import { container } from "../../core/compositionRoot/container.js"
+import { TYPES as TYPES_BRAINFUL } from "../../core/compositionRoot/types.js"
+import { IdGenerator } from "../../core/interface/index.js"
 import { ErrorInformer } from "../../domain/Error/ErrorInformer.js"
 import {
   ErrorHeavy,
@@ -25,16 +27,9 @@ import {
   ErrorConfiguration,
   GameConfiguration,
 } from "../configuration/index.js"
+import { ComponentId } from "../internal/ComponentId.js"
 import { TYPES } from "./types.js"
 
-// @injectable()
-// export class MyId implements IdGenerator {
-//   public generate(): string {
-//     return `my-${nanoid(10)}`
-//   }
-// }
-
-// Settings IoC
 const containerApp = new Container({
   autoBindInjectable: true,
   skipBaseClassChecks: true,
@@ -42,9 +37,8 @@ const containerApp = new Container({
 
 containerApp.parent = container
 
-// Replace
-// container.unbind(TYPESB.ComponentId)
-// container.bind<IdGenerator>(TYPESB.ComponentId).to(MyId)
+container.unbind(TYPES_BRAINFUL.ComponentId)
+container.bind<IdGenerator>(TYPES_BRAINFUL.ComponentId).to(ComponentId)
 
 // Base
 containerApp.bind<ErrorBase>(TYPES.ErrorHeavy).to(ErrorHeavy)

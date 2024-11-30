@@ -2,9 +2,9 @@ import { is } from "immutable"
 import * as R from "ramda"
 import {
   BehaviorSubject,
+  concatMap,
   distinctUntilChanged,
   filter,
-  mergeMap,
   Observable,
   skip,
   Subject,
@@ -21,10 +21,21 @@ import type {
   IdGenerator,
 } from "../../interface/index.js"
 
-type EventName = "setParent"
+type Event = EventSetParent | EventMount | EventDestroy
 
-interface Events {
-  event: EventName
+interface EventSetParent {
+  name: "setParent"
+  value: ComponentStateful
+}
+
+interface EventMount {
+  name: "mount"
+  value: null
+}
+
+interface EventDestroy {
+  name: "destroy"
+  value: null
 }
 
 export abstract class ComponentBase<TProps = any, TState = any>
@@ -34,8 +45,8 @@ export abstract class ComponentBase<TProps = any, TState = any>
   #domFinder = container.get<DomFinder>(TYPES.ElementFinder)
 
   #unsubscribe: Subject<void>
-  #eventsSubject: Subject<Events>
-  #events: Observable<Events>
+  #eventsSubject: Subject<Event>
+  #events: Observable<Event>
 
   #id: string
   #host: Element
@@ -48,7 +59,7 @@ export abstract class ComponentBase<TProps = any, TState = any>
 
   protected constructor() {
     this.#unsubscribe = new Subject<void>()
-    this.#eventsSubject = new Subject<Events>()
+    this.#eventsSubject = new Subject<Event>()
     this.#events = this.#eventsSubject.asObservable()
 
     this.#id = this.#idGenerator.generate()
@@ -57,8 +68,13 @@ export abstract class ComponentBase<TProps = any, TState = any>
     this.#slick = () => false
     this.#props = () => ({}) as TProps
 
+    this._handleSetParent()
+    this._handleMount()
     this._handleStateUpdated()
+    this._handleDestroy()
     this._handleCleaner()
+
+    console.log(1, "created", this.constructor.name, this.#id)
   }
 
   abstract render(): string
@@ -92,18 +108,11 @@ export abstract class ComponentBase<TProps = any, TState = any>
     return this
   }
 
-  setParent(parent: ComponentStateful | undefined): this {
-    R.ifElse(
-      () => R.not(Boolean(this.#parent)),
-      () => {
-        this.#parent = parent
-
-        this.#eventsSubject.next({
-          event: "setParent",
-        })
-      },
-      R.T,
-    )()
+  setParent(parent: ComponentStateful): this {
+    this.#eventsSubject.next({
+      name: "setParent",
+      value: parent,
+    })
 
     return this
   }
@@ -118,58 +127,60 @@ export abstract class ComponentBase<TProps = any, TState = any>
   }
 
   mount(): void {
-    queueMicrotask(() => {
-      R.pipe(
-        R.ifElse(
-          (parentElement: Element | null) => Boolean(parentElement),
-          (parentElement) => {
-            this.#host.innerHTML = this.render()
-            ;(parentElement as Element).replaceChildren(this.#host)
-
-            this.children().forEach((c: Children) => {
-              c.setParent(this).mount()
-            })
-
-            queueMicrotask(() => {
-              requestAnimationFrame(() => {
-                this.onMounted()
-              })
-            })
-          },
-          R.T,
-        ),
-      )(this.#domFinder.find(this.#parent!.host, this.#id))
-    })
+    this.#eventsSubject.next({ name: "mount", value: null })
   }
 
   destroy(): void {
-    R.ifElse(
-      () => this.#unsubscribe.observed,
-      () => {
-        queueMicrotask(() => {
-          this.onDestroy()
-        })
+    this.#eventsSubject.next({ name: "destroy", value: null })
+  }
 
-        queueMicrotask(() => {
-          this.#unsubscribe.next()
-          this.#unsubscribe.complete()
-          this.#eventsSubject.complete()
-          this.#host.innerHTML = ""
-        })
+  private _handleSetParent() {
+    this.#events
+      .pipe(
+        takeUntil(this.#unsubscribe),
+        filter((evt) => R.equals("setParent", evt.name)),
+        take(1),
+        tap((evt) => {
+          console.log(2, "_handleSetParent", this.constructor.name, this.#id)
+          this.#parent = (evt as EventSetParent).value
+        }),
+      )
+      .subscribe()
+  }
 
-        queueMicrotask(() => {
-          this.children().forEach((c: Children) => {
-            c.destroy()
+  private _handleMount() {
+    this.#events
+      .pipe(
+        takeUntil(this.#unsubscribe),
+        filter((evt) => R.equals("mount", evt.name)),
+        tap(() => {
+          queueMicrotask(() => {
+            R.ifElse(
+              (parentElement: Element | null) => Boolean(parentElement),
+              (parentElement) => {
+                console.log(3, "mount", this.constructor.name, this.#id)
+                this.#host.innerHTML = this.render()
+                ;(parentElement as Element).replaceChildren(this.#host)
+
+                this.children().forEach((c: Children) => {
+                  c.setParent(this).mount()
+                })
+
+                requestAnimationFrame(() => {
+                  this.onMounted()
+                })
+              },
+              R.T,
+            )(this.#domFinder.find(this.#parent!.host, this.#id))
           })
-        })
-      },
-      R.T,
-    )()
+        }),
+      )
+      .subscribe()
   }
 
   private _handleStateUpdated(): void {
     queueMicrotask(() => {
-      return this.state
+      this.state
         .pipe(
           takeUntil(this.#unsubscribe),
           skip(1),
@@ -177,21 +188,54 @@ export abstract class ComponentBase<TProps = any, TState = any>
             is(previous, current),
           ),
           tap(() => {
-            queueMicrotask(() => {
-              this.#host.innerHTML = this.render()
+            console.log(4, "state updated", this.constructor.name, this.#id)
+            this.#host.innerHTML = this.render()
 
-              this.children().forEach((c: Children) => {
-                c.setParent(this).mount()
-              })
+            this.children().forEach((c: Children) => {
+              c.setParent(this).mount()
+            })
 
-              requestAnimationFrame(() => {
-                this.onUpdated()
-              })
+            requestAnimationFrame(() => {
+              this.onUpdated()
             })
           }),
         )
         .subscribe()
     })
+  }
+
+  private _handleDestroy() {
+    this.#events
+      .pipe(
+        takeUntil(this.#unsubscribe),
+        filter((evt) => R.equals("destroy", evt.name)),
+        tap(() => {
+          console.log("destroy", this.constructor.name, this.#id)
+
+          queueMicrotask(() => {
+            this.onDestroy()
+          })
+
+          queueMicrotask(() => {
+            R.ifElse(
+              () => this.#unsubscribe.observed,
+              () => {
+                this.#unsubscribe.next()
+                this.#unsubscribe.complete()
+                this.#eventsSubject.complete()
+                this.#host.innerHTML = ""
+                this.#parent = undefined
+              },
+              R.T,
+            )()
+          })
+
+          this.children().forEach((c: Children) => {
+            c.destroy()
+          })
+        }),
+      )
+      .subscribe()
   }
 
   private _handleCleaner() {
@@ -200,15 +244,17 @@ export abstract class ComponentBase<TProps = any, TState = any>
         takeUntil(this.#unsubscribe),
         skip(1),
         filter(() => R.not(this.#slick())),
-        distinctUntilChanged((previous: any, current: any) =>
-          is(previous, current),
-        ),
         tap(() => {
-          requestAnimationFrame(() => {
+          queueMicrotask(() => {
             R.ifElse(
               () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
-              () => this.destroy(),
-              R.T,
+              () => {
+                console.log("call to destroy", this.constructor.name)
+                this.destroy()
+              },
+              () => {
+                console.log("not call destroy", this.constructor.name)
+              },
             )()
           })
         }),
@@ -217,9 +263,9 @@ export abstract class ComponentBase<TProps = any, TState = any>
     this.#events
       .pipe(
         takeUntil(this.#unsubscribe),
-        filter((evt) => R.equals("setParent", evt.event)),
+        filter((evt) => R.equals("setParent", evt.name)),
         take(1),
-        mergeMap(parentSubscribe),
+        concatMap(parentSubscribe),
       )
       .subscribe()
   }

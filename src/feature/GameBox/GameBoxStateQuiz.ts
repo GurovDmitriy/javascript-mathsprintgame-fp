@@ -152,7 +152,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
         takeUntil(this.unsubscribe),
         delegate("btn-quiz-box__btn"),
         map((event) => {
-          R.ifElse(
+          return R.ifElse(
             (e: Event) =>
               (e.target as HTMLElement).classList.contains("btn--wrong"),
             () => "wrong",
@@ -160,7 +160,7 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
           )(event)
         }),
         tap((typeAnswer) => {
-          R.ifElse(
+          return R.ifElse(
             (answer) => R.equals(answer, "wrong"),
             () => this._remote.wrong(),
             () => this._remote.right(),
