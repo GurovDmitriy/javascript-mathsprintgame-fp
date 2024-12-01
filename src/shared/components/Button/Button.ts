@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import mustache from "mustache"
+import M from "mustache"
 import { ComponentPure } from "../../../core/framework/Component/index.ts"
 
 interface Props {
@@ -20,6 +20,6 @@ export class Button extends ComponentPure<Props> {
       </button>
     `
 
-    return mustache.render(template, this.props)
+    return M.render(template, this.props)
   }
 }

@@ -11,7 +11,6 @@ import {
 
 type StateError = ErrorCustom | null
 
-// TODO: create instance children
 @injectable()
 export class ErrorInformer implements ErrorGlobalHandler {
   private readonly _errorSubject: BehaviorSubject<StateError>

@@ -1,4 +1,3 @@
-export * from "./Cleaner/index.ts"
 export * from "./Component/index.ts"
 export * from "./DomFinder/index.ts"
 export * from "./IdGenerator/index.ts"

@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import type { GameConfig } from "../../interfaces/index.js"
+import type { GameConfig } from "../../interfaces/index.ts"
 
 @injectable()
 export class GameConfiguration implements GameConfig {
