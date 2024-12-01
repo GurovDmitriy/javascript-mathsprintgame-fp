@@ -147,25 +147,39 @@ export class GameBoxStateQuiz extends ComponentBase<GameBoxContext, StateImm> {
   }
 
   private _handleBtnAnswer() {
-    fromEvent(this.host, "click")
+    const tapRemote = R.ifElse(
+      (answer: "wrong" | "right") => R.equals(answer, "wrong"),
+      () => this._remote.wrong(),
+      () => this._remote.right(),
+    )
+
+    fromEvent<KeyboardEvent>(document, "keydown")
+      .pipe(
+        takeUntil(this.unsubscribe),
+        map(
+          R.ifElse(
+            (e) => R.equals("ArrowLeft", e.key),
+            () => "wrong" as const,
+            () => "right" as const,
+          ),
+        ),
+        tap(tapRemote),
+      )
+      .subscribe()
+
+    fromEvent<Event>(this.host, "click")
       .pipe(
         takeUntil(this.unsubscribe),
         delegate("btn-quiz-box__btn"),
-        map((event) => {
-          return R.ifElse(
+        map(
+          R.ifElse(
             (e: Event) =>
               (e.target as HTMLElement).classList.contains("btn--wrong"),
-            () => "wrong",
-            () => "right",
-          )(event)
-        }),
-        tap((typeAnswer) => {
-          return R.ifElse(
-            (answer) => R.equals(answer, "wrong"),
-            () => this._remote.wrong(),
-            () => this._remote.right(),
-          )(typeAnswer)
-        }),
+            () => "wrong" as const,
+            () => "right" as const,
+          ),
+        ),
+        tap(tapRemote),
         catchError((error) => {
           this._errorHandler.handle(error)
           return of(error)
