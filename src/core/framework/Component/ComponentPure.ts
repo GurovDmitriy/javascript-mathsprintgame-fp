@@ -1,8 +1,12 @@
 import * as R from "ramda"
 import {
+  animationFrameScheduler,
+  asapScheduler,
   concatMap,
   filter,
   Observable,
+  observeOn,
+  queueScheduler,
   skip,
   Subject,
   take,
@@ -122,6 +126,7 @@ export abstract class ComponentPure<TProps = any>
   private _handleSetParent() {
     this.#events
       .pipe(
+        observeOn(queueScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("setParent", evt.name)),
         take(1),
@@ -136,24 +141,23 @@ export abstract class ComponentPure<TProps = any>
   private _handleMount() {
     this.#events
       .pipe(
+        observeOn(asapScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("setParent", evt.name)),
         tap(() => {
-          queueMicrotask(() => {
-            R.ifElse(
-              (parentElement: Element | null) => Boolean(parentElement),
-              (parentElement) => {
-                console.log(3, "mount", this.constructor.name, this.#id)
-                this.#host.innerHTML = this.render()
-                ;(parentElement as Element).replaceChildren(this.#host)
+          R.ifElse(
+            (parentElement: Element | null) => Boolean(parentElement),
+            (parentElement) => {
+              console.log(3, "mount", this.constructor.name, this.#id)
+              this.#host.innerHTML = this.render()
+              ;(parentElement as Element).replaceChildren(this.#host)
 
-                requestAnimationFrame(() => {
-                  this.onMounted()
-                })
-              },
-              R.T,
-            )(this.#domFinder.find(this.#parent!.host, this.#id))
-          })
+              requestAnimationFrame(() => {
+                this.onMounted()
+              })
+            },
+            R.T,
+          )(this.#domFinder.find(this.#parent!.host, this.#id))
         }),
       )
       .subscribe()
@@ -162,6 +166,7 @@ export abstract class ComponentPure<TProps = any>
   private _handleDestroy() {
     this.#events
       .pipe(
+        observeOn(asapScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("destroy", evt.name)),
         tap(() => {
@@ -192,27 +197,27 @@ export abstract class ComponentPure<TProps = any>
   private _handleCleaner() {
     const parentSubscribe = () =>
       this.#parent!.state.pipe(
+        observeOn(animationFrameScheduler),
         takeUntil(this.#unsubscribe),
         skip(1),
         filter(() => R.not(this.#slick())),
         tap(() => {
-          queueMicrotask(() => {
-            R.ifElse(
-              () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
-              () => {
-                console.log("call to destroy", this.constructor.name)
-                this.destroy()
-              },
-              () => {
-                console.log("not call destroy", this.constructor.name)
-              },
-            )()
-          })
+          R.ifElse(
+            () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
+            () => {
+              console.log("call to destroy", this.constructor.name)
+              this.destroy()
+            },
+            () => {
+              console.log("not call destroy", this.constructor.name)
+            },
+          )()
         }),
       )
 
     this.#events
       .pipe(
+        observeOn(animationFrameScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("setParent", evt.name)),
         take(1),
