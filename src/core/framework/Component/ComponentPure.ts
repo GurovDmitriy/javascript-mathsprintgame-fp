@@ -1,12 +1,8 @@
 import * as R from "ramda"
 import {
-  animationFrameScheduler,
-  asapScheduler,
   concatMap,
   filter,
   Observable,
-  observeOn,
-  queueScheduler,
   skip,
   Subject,
   take,
@@ -22,16 +18,11 @@ import type {
   IdGenerator,
 } from "../../interface/index.ts"
 
-type Event = EventSetParent | EventMount | EventDestroy
+type Event = EventSetParent | EventDestroy
 
 interface EventSetParent {
   name: "setParent"
   value: ComponentStateful
-}
-
-interface EventMount {
-  name: "mount"
-  value: null
 }
 
 interface EventDestroy {
@@ -67,7 +58,6 @@ export abstract class ComponentPure<TProps = any>
     this.#props = () => ({}) as TProps
 
     this._handleSetParent()
-    this._handleMount()
     this._handleDestroy()
     this._handleCleaner()
 
@@ -116,7 +106,21 @@ export abstract class ComponentPure<TProps = any>
   }
 
   mount(): void {
-    this.#eventsSubject.next({ name: "mount", value: null })
+    queueMicrotask(() => {
+      R.ifElse(
+        (parentElement: Element | null) => Boolean(parentElement),
+        (parentElement) => {
+          console.log(3, "mount", this.constructor.name, this.#id)
+          this.#host.innerHTML = this.render()
+          ;(parentElement as Element).replaceChildren(this.#host)
+
+          requestAnimationFrame(() => {
+            this.onMounted()
+          })
+        },
+        R.T,
+      )(this.#domFinder.find(this.#parent!.host, this.#id))
+    })
   }
 
   destroy(): void {
@@ -126,7 +130,6 @@ export abstract class ComponentPure<TProps = any>
   private _handleSetParent() {
     this.#events
       .pipe(
-        observeOn(queueScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("setParent", evt.name)),
         take(1),
@@ -138,35 +141,9 @@ export abstract class ComponentPure<TProps = any>
       .subscribe()
   }
 
-  private _handleMount() {
-    this.#events
-      .pipe(
-        observeOn(asapScheduler),
-        takeUntil(this.#unsubscribe),
-        filter((evt) => R.equals("setParent", evt.name)),
-        tap(() => {
-          R.ifElse(
-            (parentElement: Element | null) => Boolean(parentElement),
-            (parentElement) => {
-              console.log(3, "mount", this.constructor.name, this.#id)
-              this.#host.innerHTML = this.render()
-              ;(parentElement as Element).replaceChildren(this.#host)
-
-              requestAnimationFrame(() => {
-                this.onMounted()
-              })
-            },
-            R.T,
-          )(this.#domFinder.find(this.#parent!.host, this.#id))
-        }),
-      )
-      .subscribe()
-  }
-
   private _handleDestroy() {
     this.#events
       .pipe(
-        observeOn(asapScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("destroy", evt.name)),
         tap(() => {
@@ -197,27 +174,27 @@ export abstract class ComponentPure<TProps = any>
   private _handleCleaner() {
     const parentSubscribe = () =>
       this.#parent!.state.pipe(
-        observeOn(animationFrameScheduler),
         takeUntil(this.#unsubscribe),
         skip(1),
         filter(() => R.not(this.#slick())),
         tap(() => {
-          R.ifElse(
-            () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
-            () => {
-              console.log("call to destroy", this.constructor.name)
-              this.destroy()
-            },
-            () => {
-              console.log("not call destroy", this.constructor.name)
-            },
-          )()
+          queueMicrotask(() => {
+            R.ifElse(
+              () => R.isNil(this.#domFinder.find(this.#parent!.host, this.id)),
+              () => {
+                console.log("call to destroy", this.constructor.name)
+                this.destroy()
+              },
+              () => {
+                console.log("not call destroy", this.constructor.name)
+              },
+            )()
+          })
         }),
       )
 
     this.#events
       .pipe(
-        observeOn(animationFrameScheduler),
         takeUntil(this.#unsubscribe),
         filter((evt) => R.equals("setParent", evt.name)),
         take(1),
