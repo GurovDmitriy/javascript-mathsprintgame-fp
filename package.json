@@ -9,7 +9,7 @@
   "source": "src/index.html",
   "scripts": {
     "dev": "parcel",
-    "build": "parcel build src/index.ts",
+    "build": "parcel build src/index.ts --dist-dir build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "check": "tsc --noEmit",
     "deploy": "gh-pages -d build",
