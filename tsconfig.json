@@ -6,7 +6,7 @@
     "module": "ESNext",
     "rootDir": "./src",
     "moduleResolution": "Bundler",
-    "types": ["reflect-metadata", "@brainfuljs/brainful"],
+    "types": ["reflect-metadata"],
     "outDir": "./dist",
     "isolatedModules": true,
     "esModuleInterop": true,

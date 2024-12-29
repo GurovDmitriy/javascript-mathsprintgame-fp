@@ -331,3 +331,5 @@ tasks.md
 *.local
 .idea
 .output
+dist
+build
