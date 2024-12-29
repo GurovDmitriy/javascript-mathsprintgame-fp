@@ -1,3 +1,4 @@
+import { Children, ComponentBase } from "@brainfuljs/brainful"
 import { fromJS, FromJS } from "immutable"
 import { injectable } from "inversify"
 import M from "mustache"
@@ -10,10 +11,8 @@ import {
   tap,
 } from "rxjs"
 import { containerApp } from "../../app/compositionRoot/container.ts"
-import { ComponentBase } from "../../core/framework/Component/index.ts"
-import { Children } from "../../core/interface/index.ts"
-import type { ErrorInfo } from "../../interfaces/index.ts"
-import { Button } from "../../shared/components/Button/index.ts"
+import type { ErrorInfo } from "../../interfaces"
+import { Button } from "../../shared/components/Button"
 import { childrenIterator } from "../../shared/tools/childrenIterator.ts"
 import { delegate } from "../../shared/tools/delegate.ts"
 

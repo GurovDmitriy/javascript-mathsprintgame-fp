@@ -7,8 +7,8 @@ import {
   type ErrorInfo,
   type ErrorMessage,
   type ErrorStatus,
-} from "../../interfaces/index.js"
-import { ErrorLight, ErrorReadable, ErrorService } from "../Error/index.ts"
+} from "../../interfaces"
+import { ErrorLight, ErrorReadable, ErrorService } from "../Error"
 
 describe("ErrorReadable", () => {
   it("should be return null", () => {

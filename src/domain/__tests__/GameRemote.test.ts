@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals"
-import { Game } from "../../interfaces/index.ts"
-import { GameRemote } from "../Game/index.ts"
+import { Game } from "../../interfaces"
+import { GameRemote } from "../Game"
 
 describe("GameRemote", () => {
   it("should be call to choice method", () => {

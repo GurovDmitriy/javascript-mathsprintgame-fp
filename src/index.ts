@@ -1,10 +1,10 @@
 import "reflect-metadata"
 
+import { RootRender, TYPES } from "@brainfuljs/brainful"
 import { containerApp } from "./app/compositionRoot/container.ts"
-import { RootCreator } from "./core/framework/RootCreator/index.ts"
-import { GameBox } from "./feature/GameBox/index.ts"
+import { GameBox } from "./feature/GameBox"
 
-const rootCreator = containerApp.get<RootCreator>(RootCreator)
+const rootCreator = containerApp.get<RootRender>(TYPES.RootCreator)
 const root = document.getElementById("root")
 
 if (root) {

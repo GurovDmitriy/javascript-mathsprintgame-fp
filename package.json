@@ -21,6 +21,7 @@
     "update": "ncu --interactive --format group"
   },
   "dependencies": {
+    "@brainfuljs/brainful": "^0.1.0",
     "immutable": "^4.3.7",
     "inversify": "^6.0.2",
     "jsx-dom": "^8.1.5",

@@ -6,8 +6,8 @@ import {
   type ErrorMessage,
   type ErrorStatus,
   GameConfig,
-} from "../../interfaces/index.ts"
-import { GameMathSprint } from "../Game/index.ts"
+} from "../../interfaces"
+import { GameMathSprint } from "../Game"
 
 describe("GameMathSprint", () => {
   it("should be install config", () => {

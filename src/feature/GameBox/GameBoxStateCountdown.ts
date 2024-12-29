@@ -1,3 +1,4 @@
+import { ComponentBase } from "@brainfuljs/brainful"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import M from "mustache"
@@ -13,8 +14,7 @@ import {
   timer,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types.ts"
-import { ComponentBase } from "../../core/framework/Component/index.ts"
-import type { Remote } from "../../interfaces/index.ts"
+import type { Remote } from "../../interfaces"
 import { GameBoxContext } from "./types.ts"
 
 interface State {

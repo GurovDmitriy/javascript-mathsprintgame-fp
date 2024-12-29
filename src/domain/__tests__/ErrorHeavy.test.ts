@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals"
-import { ErrorHeavy } from "../Error/index.ts"
+import { ErrorHeavy } from "../Error"
 
 describe("ErrorHeavy", () => {
   it("should be set fields", () => {

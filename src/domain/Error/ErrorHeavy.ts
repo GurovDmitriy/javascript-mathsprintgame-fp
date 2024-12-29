@@ -4,7 +4,7 @@ import type {
   ErrorCode,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces/index.ts"
+} from "../../interfaces"
 
 @injectable()
 export class ErrorHeavy extends Error implements ErrorBase {

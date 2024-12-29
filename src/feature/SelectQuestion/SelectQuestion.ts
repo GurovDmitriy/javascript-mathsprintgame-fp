@@ -1,3 +1,4 @@
+import { ComponentBase } from "@brainfuljs/brainful"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import M from "mustache"
@@ -15,8 +16,7 @@ import {
   tap,
 } from "rxjs"
 import { TYPES } from "../../app/compositionRoot/types.ts"
-import { ComponentBase } from "../../core/framework/Component/index.ts"
-import type { ErrorHandler, Game, Remote } from "../../interfaces/index.ts"
+import type { ErrorHandler, Game, Remote } from "../../interfaces"
 import { delegate } from "../../shared/tools/delegate.ts"
 
 interface State {

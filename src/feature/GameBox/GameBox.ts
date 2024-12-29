@@ -1,3 +1,8 @@
+import {
+  Children,
+  ComponentBase,
+  ComponentStateful,
+} from "@brainfuljs/brainful"
 import { fromJS, FromJS } from "immutable"
 import { inject, injectable } from "inversify"
 import M from "mustache"
@@ -12,9 +17,7 @@ import {
 } from "rxjs"
 import { containerApp } from "../../app/compositionRoot/container.ts"
 import { TYPES } from "../../app/compositionRoot/types.ts"
-import { ComponentBase } from "../../core/framework/Component/index.ts"
-import { Children, ComponentStateful } from "../../core/interface/index.ts"
-import type { Game } from "../../interfaces/index.ts"
+import type { Game } from "../../interfaces"
 import { childrenIterator } from "../../shared/tools/childrenIterator.ts"
 import { GameBoxStateCountdown } from "./GameBoxStateCountdown.ts"
 import { GameBoxStateError } from "./GameBoxStateError.ts"

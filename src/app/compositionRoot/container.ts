@@ -1,15 +1,17 @@
+import {
+  container as containerBrainful,
+  TYPES as TYPES_BRAINFUL,
+  type IdGenerator,
+} from "@brainfuljs/brainful"
 import { Container, interfaces } from "inversify"
-import { container } from "../../core/compositionRoot/container.ts"
-import { TYPES as TYPES_BRAINFUL } from "../../core/compositionRoot/types.ts"
-import { IdGenerator } from "../../core/interface/index.ts"
-import { ErrorInformer } from "../../domain/Error/ErrorInformer.ts"
 import {
   ErrorHeavy,
   ErrorLight,
   ErrorReadable,
   ErrorService,
-} from "../../domain/Error/index.js"
-import { GameMathSprint, GameRemote } from "../../domain/Game/index.js"
+} from "../../domain/Error"
+import { ErrorInformer } from "../../domain/Error/ErrorInformer.ts"
+import { GameMathSprint, GameRemote } from "../../domain/Game"
 import type {
   ErrorBase,
   ErrorCode,
@@ -22,11 +24,8 @@ import type {
   Game,
   GameConfig,
   Remote,
-} from "../../interfaces/index.js"
-import {
-  ErrorConfiguration,
-  GameConfiguration,
-} from "../configuration/index.js"
+} from "../../interfaces"
+import { ErrorConfiguration, GameConfiguration } from "../configuration"
 import { ComponentId } from "../internal/ComponentId.js"
 import { TYPES } from "./types.js"
 
@@ -35,10 +34,11 @@ const containerApp = new Container({
   skipBaseClassChecks: true,
 })
 
-containerApp.parent = container
+containerApp.parent = containerBrainful
 
-container.unbind(TYPES_BRAINFUL.ComponentId)
-container.bind<IdGenerator>(TYPES_BRAINFUL.ComponentId).to(ComponentId)
+containerBrainful
+  .rebind<IdGenerator>(TYPES_BRAINFUL.ComponentId)
+  .to(ComponentId)
 
 // Base
 containerApp.bind<ErrorBase>(TYPES.ErrorHeavy).to(ErrorHeavy)

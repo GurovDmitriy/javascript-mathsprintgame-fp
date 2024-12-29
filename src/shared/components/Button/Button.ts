@@ -1,6 +1,6 @@
+import { ComponentPure } from "@brainfuljs/brainful"
 import { injectable } from "inversify"
 import M from "mustache"
-import { ComponentPure } from "../../../core/framework/Component/index.ts"
 
 interface Props {
   content: string

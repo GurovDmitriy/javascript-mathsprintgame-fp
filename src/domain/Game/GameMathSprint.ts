@@ -26,7 +26,7 @@ import type {
   GameResult,
   GameScore,
   GameState,
-} from "../../interfaces/index.ts"
+} from "../../interfaces"
 import { fixedNum } from "../../shared/tools/fixedNum.ts"
 import { GAME_ERROR_CODE } from "./types.ts"
 

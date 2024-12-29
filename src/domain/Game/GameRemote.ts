@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify"
 import { TYPES } from "../../app/compositionRoot/types.ts"
-import type { Game, Remote } from "../../interfaces/index.ts"
+import type { Game, Remote } from "../../interfaces"
 
 @injectable()
 export class GameRemote implements Remote {

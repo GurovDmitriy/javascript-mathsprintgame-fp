@@ -12,7 +12,7 @@ import type {
   ErrorInfo,
   ErrorMessage,
   ErrorStatus,
-} from "../../interfaces/index.ts"
+} from "../../interfaces"
 import { ErrorHeavy } from "./ErrorHeavy.ts"
 import { ErrorLight } from "./ErrorLight.ts"
 
